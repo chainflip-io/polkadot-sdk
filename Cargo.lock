@@ -13159,6 +13159,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "polkavm"
+version = "0.1.1"
+dependencies = [
+ "log",
+ "polkavm-assembler",
+ "polkavm-common",
+ "polkavm-linux-sandbox",
+]
+
+[[package]]
+name = "polkavm-assembler"
+version = "0.1.1"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "polkavm-common"
+version = "0.1.1"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "polkavm-linux-raw"
+version = "0.1.1"
+
+[[package]]
+name = "polkavm-linux-sandbox"
+version = "0.1.1"
+dependencies = [
+ "log",
+ "polkavm-common",
+ "polkavm-linux-raw",
+]
+
+[[package]]
 name = "polling"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15142,6 +15179,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "paste",
+ "polkavm",
  "rustix 0.36.15",
  "sc-allocator",
  "sc-executor-common",
