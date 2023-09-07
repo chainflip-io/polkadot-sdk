@@ -35,7 +35,10 @@ use futures::{
 	task::{Context, Poll},
 };
 use schnellru::{ByLength, LruMap};
-use task::{FetchChunks, FetchChunksParams, FetchFull, FetchFullParams};
+use task::{
+	FetchChunks, FetchChunksParams, FetchFull, FetchFullParams, FetchSystematicChunks,
+	FetchSystematicChunksParams,
+};
 
 use fatality::Nested;
 use polkadot_erasure_coding::{
@@ -90,6 +93,8 @@ pub enum RecoveryStrategyKind {
 	BackersFirstIfSizeLower(usize),
 	/// We always recover using validator chunks.
 	ChunksAlways,
+	/// First try the backing group. Then systematic chunks.
+	BackersThenSystematicChunks,
 	/// Do not request data from the availability store.
 	/// This is the useful for nodes where the
 	/// availability-store subsystem is not expected to run,
@@ -474,6 +479,17 @@ async fn handle_recover<Context>(
 						}))),
 					_ => {},
 				};
+			}
+
+			if recovery_strategy_kind == RecoveryStrategyKind::BackersThenSystematicChunks {
+				recovery_strategies.push_back(Box::new(FetchSystematicChunks::new(
+					FetchSystematicChunksParams {
+						validators: (0..recovery_threshold(session_info.validators.len()).unwrap())
+							.map(|i| ValidatorIndex(u32::try_from(i).unwrap()))
+							.collect(),
+						erasure_task_tx,
+					},
+				)));
 			}
 
 			recovery_strategies.push_back(Box::new(FetchChunks::new(fetch_chunks_params)));
