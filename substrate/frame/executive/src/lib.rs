@@ -174,6 +174,7 @@ pub struct Executive<
 	UnsignedValidator,
 	AllPalletsWithSystem,
 	OnRuntimeUpgrade = (),
+	AllStateChecksPallets = AllPalletsWithSystem,
 >(
 	PhantomData<(
 		System,
@@ -182,6 +183,7 @@ pub struct Executive<
 		UnsignedValidator,
 		AllPalletsWithSystem,
 		OnRuntimeUpgrade,
+		AllStateChecksPallets,
 	)>,
 );
 
@@ -200,9 +202,17 @@ impl<
 			+ OnFinalize<BlockNumberFor<System>>
 			+ OffchainWorker<BlockNumberFor<System>>,
 		COnRuntimeUpgrade: OnRuntimeUpgrade,
+		AllStateChecksPallets,
 	> ExecuteBlock<Block>
-	for Executive<System, Block, Context, UnsignedValidator, AllPalletsWithSystem, COnRuntimeUpgrade>
-where
+	for Executive<
+		System,
+		Block,
+		Context,
+		UnsignedValidator,
+		AllPalletsWithSystem,
+		COnRuntimeUpgrade,
+		AllStateChecksPallets,
+	> where
 	Block::Extrinsic: Checkable<Context> + Codec,
 	CheckedOf<Block::Extrinsic, Context>: Applyable + GetDispatchInfo,
 	CallOf<Block::Extrinsic, Context>:
@@ -218,6 +228,7 @@ where
 			UnsignedValidator,
 			AllPalletsWithSystem,
 			COnRuntimeUpgrade,
+			AllStateChecksPallets,
 		>::execute_block(block);
 	}
 }
@@ -240,14 +251,24 @@ impl<
 			+ TryState<BlockNumberFor<System>>
 			+ TryDecodeEntireStorage,
 		COnRuntimeUpgrade: OnRuntimeUpgrade,
-	> Executive<System, Block, Context, UnsignedValidator, AllPalletsWithSystem, COnRuntimeUpgrade>
-where
+		AllStateChecksPallets,
+	>
+	Executive<
+		System,
+		Block,
+		Context,
+		UnsignedValidator,
+		AllPalletsWithSystem,
+		COnRuntimeUpgrade,
+		AllStateChecksPallets,
+	> where
 	Block::Extrinsic: Checkable<Context> + Codec,
 	CheckedOf<Block::Extrinsic, Context>: Applyable + GetDispatchInfo,
 	CallOf<Block::Extrinsic, Context>:
 		Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 	OriginOf<Block::Extrinsic, Context>: From<Option<System::AccountId>>,
 	UnsignedValidator: ValidateUnsigned<Call = CallOf<Block::Extrinsic, Context>>,
+	AllStateChecksPallets: TryState<BlockNumberFor<System>> + TryDecodeEntireStorage,
 {
 	/// Execute given block, but don't as strict is the normal block execution.
 	///
@@ -315,7 +336,7 @@ where
 
 		// run the try-state checks of all pallets, ensuring they don't alter any state.
 		let _guard = frame_support::StorageNoopGuard::default();
-		<AllPalletsWithSystem as frame_support::traits::TryState<
+		<AllStateChecksPallets as frame_support::traits::TryState<
 			BlockNumberFor<System>,
 		>>::try_state(*header.number(), select.clone())
 		.map_err(|e| {
@@ -323,7 +344,7 @@ where
 			e
 		})?;
 		if select.any() {
-			let res = AllPalletsWithSystem::try_decode_entire_state();
+			let res = AllStateChecksPallets::try_decode_entire_state();
 			Self::log_decode_result(res)?;
 		}
 		drop(_guard);
@@ -388,13 +409,17 @@ where
 
 		// The state must be decodable:
 		if checks.any() {
-			let res = AllPalletsWithSystem::try_decode_entire_state();
+			// [CHAINFLIP]
+			// We can revert this change once paritytech/polkadot-sdk#2560 is merged.
+			let res = AllStateChecksPallets::try_decode_entire_state();
 			Self::log_decode_result(res)?;
 		}
 
 		// Check all storage invariants:
 		if checks.try_state() {
-			AllPalletsWithSystem::try_state(
+			// [CHAINFLIP]
+			// We can revert this change once paritytech/polkadot-sdk#2560 is merged.
+			AllStateChecksPallets::try_state(
 				frame_system::Pallet::<System>::block_number(),
 				TryStateSelect::All,
 			)?;
@@ -451,8 +476,17 @@ impl<
 			+ OnFinalize<BlockNumberFor<System>>
 			+ OffchainWorker<BlockNumberFor<System>>,
 		COnRuntimeUpgrade: OnRuntimeUpgrade,
-	> Executive<System, Block, Context, UnsignedValidator, AllPalletsWithSystem, COnRuntimeUpgrade>
-where
+		AllStateChecksPallets,
+	>
+	Executive<
+		System,
+		Block,
+		Context,
+		UnsignedValidator,
+		AllPalletsWithSystem,
+		COnRuntimeUpgrade,
+		AllStateChecksPallets,
+	> where
 	Block::Extrinsic: Checkable<Context> + Codec,
 	CheckedOf<Block::Extrinsic, Context>: Applyable + GetDispatchInfo,
 	CallOf<Block::Extrinsic, Context>:
