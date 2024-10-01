@@ -50,3 +50,17 @@ std = [
 	"sp-std/std",
 	"ssz_rs/std",
 ]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"snowbridge-ethereum/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"snowbridge-ethereum/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime"
+]

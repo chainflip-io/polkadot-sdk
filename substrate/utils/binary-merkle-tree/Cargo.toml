@@ -26,3 +26,11 @@ sp-runtime = { default-features = true, path = "../../primitives/runtime" }
 debug = ["array-bytes", "log"]
 default = ["debug", "std"]
 std = ["hash-db/std", "log/std"]
+runtime-benchmarks = [
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

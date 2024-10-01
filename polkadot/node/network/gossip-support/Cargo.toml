@@ -51,3 +51,48 @@ async-trait = { workspace = true }
 parking_lot = { workspace = true, default-features = true }
 lazy_static = { workspace = true }
 quickcheck = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"polkadot-node-network-protocol/std",
+	"polkadot-node-subsystem-test-helpers/std",
+	"polkadot-node-subsystem-util/std",
+	"rand/std",
+	"rand_chacha/std",
+	"sc-network/std",
+	"sc-network-common/std",
+	"gum/std",
+	"polkadot-node-subsystem/std"
+]
+runtime-benchmarks = [
+	"polkadot-node-network-protocol/runtime-benchmarks",
+	"polkadot-node-subsystem-test-helpers/runtime-benchmarks",
+	"polkadot-node-subsystem-util/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sc-network-common/runtime-benchmarks",
+	"sp-authority-discovery/runtime-benchmarks",
+	"sp-consensus-babe/runtime-benchmarks",
+	"sp-keyring/runtime-benchmarks",
+	"gum/runtime-benchmarks",
+	"polkadot-node-subsystem/runtime-benchmarks",
+	"sp-application-crypto/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"sp-keystore/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-node-network-protocol/try-runtime",
+	"polkadot-node-subsystem/try-runtime",
+	"polkadot-node-subsystem-test-helpers/try-runtime",
+	"polkadot-node-subsystem-util/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"sc-network/try-runtime",
+	"sc-network-common/try-runtime",
+	"sp-authority-discovery/try-runtime",
+	"sp-consensus-babe/try-runtime",
+	"sp-keyring/try-runtime",
+	"gum/try-runtime",
+	"sp-application-crypto/try-runtime",
+	"sp-core/try-runtime",
+	"sp-keystore/try-runtime"
+]

@@ -42,3 +42,21 @@ sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
 
 [features]
 remote-test = []
+std = [
+	"log/std",
+	"substrate-rpc-client/std"
+]
+runtime-benchmarks = [
+	"sp-runtime/runtime-benchmarks",
+	"sp-state-machine/runtime-benchmarks",
+	"substrate-rpc-client/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-runtime/try-runtime",
+	"sp-state-machine/try-runtime",
+	"substrate-rpc-client/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime"
+]

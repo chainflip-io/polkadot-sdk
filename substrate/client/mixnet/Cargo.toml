@@ -48,3 +48,36 @@ sp-mixnet.default-features = true
 sp-runtime.workspace = true
 sp-runtime.default-features = true
 thiserror = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"codec/std",
+	"sc-client-api/std",
+	"sc-network/std",
+	"sc-network-types/std",
+	"sc-transaction-pool-api/std",
+	"sp-consensus/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sc-transaction-pool-api/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-consensus/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-mixnet/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"sp-keystore/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-network/try-runtime",
+	"sc-transaction-pool-api/try-runtime",
+	"sp-api/try-runtime",
+	"sp-consensus/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-mixnet/try-runtime",
+	"sp-core/try-runtime",
+	"sp-keystore/try-runtime"
+]

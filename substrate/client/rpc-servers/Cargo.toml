@@ -35,3 +35,10 @@ tower-http = { workspace = true, features = ["cors"] }
 # Dependencies outside the polkadot-sdk workspace
 # which requires hyper v1
 hyper = "1.3"
+
+[features]
+std = [
+	"log/std",
+	"serde/std",
+	"prometheus-endpoint/std"
+]

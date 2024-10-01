@@ -20,4 +20,12 @@ rustversion = { workspace = true }
 
 [features]
 default = ["std"]
-std = []
+std = [
+	"substrate-wasm-builder/std"
+]
+runtime-benchmarks = [
+	"substrate-wasm-builder/runtime-benchmarks"
+]
+try-runtime = [
+	"substrate-wasm-builder/try-runtime"
+]

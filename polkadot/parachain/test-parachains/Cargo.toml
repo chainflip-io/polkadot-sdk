@@ -22,3 +22,13 @@ sp-core = { default-features = true, path = "../../../substrate/primitives/core"
 [features]
 default = ["std"]
 std = ["codec/std", "test-parachain-adder/std", "test-parachain-halt/std"]
+runtime-benchmarks = [
+	"test-parachain-adder/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"test-parachain-halt/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime",
+	"test-parachain-adder/try-runtime",
+	"test-parachain-halt/try-runtime"
+]

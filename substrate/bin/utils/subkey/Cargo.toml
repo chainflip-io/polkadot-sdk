@@ -23,3 +23,14 @@ name = "subkey"
 clap = { features = ["derive"], workspace = true }
 sc-cli.workspace = true
 sc-cli.default-features = true
+
+[features]
+std = [
+	"sc-cli/std"
+]
+runtime-benchmarks = [
+	"sc-cli/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-cli/try-runtime"
+]

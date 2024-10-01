@@ -23,3 +23,24 @@ sp-statement-store.workspace = true
 sp-statement-store.default-features = true
 env_logger = { workspace = true }
 log = { workspace = true }
+
+[features]
+std = [
+	"frame-benchmarking-cli/std",
+	"log/std",
+	"sc-cli/std"
+]
+runtime-benchmarks = [
+	"frame-benchmarking-cli/runtime-benchmarks",
+	"sc-cli/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-statement-store/runtime-benchmarks",
+	"cumulus-primitives-proof-size-hostfunction/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-benchmarking-cli/try-runtime",
+	"sc-cli/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-statement-store/try-runtime",
+	"cumulus-primitives-proof-size-hostfunction/try-runtime"
+]

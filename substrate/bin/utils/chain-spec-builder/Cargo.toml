@@ -30,3 +30,15 @@ sc-chain-spec = { features = ["clap"], workspace = true, default-features = true
 serde_json = { workspace = true, default-features = true }
 sp-tracing.workspace = true
 sp-tracing.default-features = true
+
+[features]
+std = [
+	"log/std",
+	"sc-chain-spec/std"
+]
+runtime-benchmarks = [
+	"sc-chain-spec/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-chain-spec/try-runtime"
+]

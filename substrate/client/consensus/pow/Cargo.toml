@@ -45,3 +45,37 @@ sp-inherents.workspace = true
 sp-inherents.default-features = true
 sp-runtime.workspace = true
 sp-runtime.default-features = true
+
+[features]
+std = [
+	"log/std",
+	"sc-client-api/std",
+	"sc-consensus/std",
+	"sp-blockchain/std",
+	"sp-consensus/std",
+	"prometheus-endpoint/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-consensus/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-block-builder/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-consensus/runtime-benchmarks",
+	"sp-consensus-pow/runtime-benchmarks",
+	"sp-inherents/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-consensus/try-runtime",
+	"sp-api/try-runtime",
+	"sp-block-builder/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-consensus/try-runtime",
+	"sp-consensus-pow/try-runtime",
+	"sp-inherents/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

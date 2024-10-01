@@ -25,3 +25,20 @@ finality-relay.workspace = true
 relay-utils.workspace = true
 sp-arithmetic.workspace = true
 sp-arithmetic.default-features = true
+
+[features]
+std = [
+	"finality-relay/std",
+	"log/std",
+	"relay-utils/std"
+]
+runtime-benchmarks = [
+	"bp-messages/runtime-benchmarks",
+	"finality-relay/runtime-benchmarks",
+	"relay-utils/runtime-benchmarks"
+]
+try-runtime = [
+	"bp-messages/try-runtime",
+	"finality-relay/try-runtime",
+	"relay-utils/try-runtime"
+]

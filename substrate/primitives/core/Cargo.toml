@@ -150,3 +150,9 @@ full_crypto = [
 # It should not be used in production since the implementation and interface may still
 # be subject to significant changes.
 bls-experimental = ["w3f-bls"]
+runtime-benchmarks = [
+	"sp-runtime-interface/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-runtime-interface/try-runtime"
+]

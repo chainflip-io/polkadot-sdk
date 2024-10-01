@@ -32,3 +32,28 @@ sp-runtime-interface-test-wasm.workspace = true
 sp-runtime-interface-test-wasm-deprecated.workspace = true
 sp-state-machine.workspace = true
 sp-state-machine.default-features = true
+
+[features]
+std = [
+	"sc-executor-common/std"
+]
+runtime-benchmarks = [
+	"sc-executor/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-state-machine/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-runtime-interface/runtime-benchmarks",
+	"sp-runtime-interface-test-wasm/runtime-benchmarks",
+	"sp-runtime-interface-test-wasm-deprecated/runtime-benchmarks",
+	"sc-executor-common/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-executor/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-state-machine/try-runtime",
+	"sp-io/try-runtime",
+	"sp-runtime-interface/try-runtime",
+	"sp-runtime-interface-test-wasm/try-runtime",
+	"sp-runtime-interface-test-wasm-deprecated/try-runtime",
+	"sc-executor-common/try-runtime"
+]

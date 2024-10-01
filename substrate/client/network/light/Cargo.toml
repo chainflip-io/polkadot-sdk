@@ -40,3 +40,26 @@ sp-core.default-features = true
 sp-runtime.workspace = true
 sp-runtime.default-features = true
 thiserror = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"sc-client-api/std",
+	"sc-network/std",
+	"sc-network-types/std",
+	"sp-blockchain/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-network/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

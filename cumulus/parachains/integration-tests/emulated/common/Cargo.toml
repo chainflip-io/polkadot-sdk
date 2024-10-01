@@ -60,3 +60,62 @@ pallet-bridge-messages.workspace = true
 pallet-bridge-messages.default-features = true
 bridge-runtime-common.workspace = true
 bridge-runtime-common.default-features = true
+
+[features]
+std = [
+	"codec/std",
+	"sc-consensus-grandpa/std",
+	"xcm-emulator/std"
+]
+runtime-benchmarks = [
+	"asset-test-utils/runtime-benchmarks",
+	"bp-messages/runtime-benchmarks",
+	"bridge-runtime-common/runtime-benchmarks",
+	"cumulus-pallet-parachain-system/runtime-benchmarks",
+	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"cumulus-primitives-core/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-bridge-messages/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"polkadot-parachain-primitives/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"sc-consensus-grandpa/runtime-benchmarks",
+	"sp-authority-discovery/runtime-benchmarks",
+	"sp-consensus-babe/runtime-benchmarks",
+	"sp-consensus-beefy/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-emulator/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"xcm/runtime-benchmarks"
+]
+try-runtime = [
+	"asset-test-utils/try-runtime",
+	"bp-messages/try-runtime",
+	"bridge-runtime-common/try-runtime",
+	"cumulus-pallet-parachain-system/try-runtime",
+	"cumulus-pallet-xcmp-queue/try-runtime",
+	"cumulus-primitives-core/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-assets/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-bridge-messages/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"pallet-xcm/try-runtime",
+	"parachains-common/try-runtime",
+	"polkadot-parachain-primitives/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"polkadot-runtime-parachains/try-runtime",
+	"sc-consensus-grandpa/try-runtime",
+	"sp-authority-discovery/try-runtime",
+	"sp-consensus-babe/try-runtime",
+	"sp-consensus-beefy/try-runtime",
+	"sp-runtime/try-runtime",
+	"xcm-emulator/try-runtime",
+	"sp-core/try-runtime",
+	"xcm/try-runtime"
+]

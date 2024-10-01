@@ -22,3 +22,35 @@ westend-emulated-chain.workspace = true
 westend-emulated-chain.default-features = true
 testnet-parachains-constants = { features = ["westend"], workspace = true, default-features = true }
 xcm.workspace = true
+
+[features]
+std = [
+	"cumulus-primitives-core/std",
+	"emulated-integration-tests-common/std",
+	"frame-support/std",
+	"sp-core/std",
+	"xcm/std",
+	"westend-emulated-chain/std"
+]
+runtime-benchmarks = [
+	"asset-hub-westend-runtime/runtime-benchmarks",
+	"cumulus-primitives-core/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"testnet-parachains-constants/runtime-benchmarks",
+	"westend-emulated-chain/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"xcm/runtime-benchmarks"
+]
+try-runtime = [
+	"asset-hub-westend-runtime/try-runtime",
+	"cumulus-primitives-core/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"frame-support/try-runtime",
+	"parachains-common/try-runtime",
+	"testnet-parachains-constants/try-runtime",
+	"westend-emulated-chain/try-runtime",
+	"sp-core/try-runtime",
+	"xcm/try-runtime"
+]

@@ -20,3 +20,29 @@ bridge-hub-rococo-runtime.workspace = true
 bridge-hub-rococo-runtime.default-features = true
 bridge-hub-common.workspace = true
 testnet-parachains-constants = { features = ["rococo"], workspace = true, default-features = true }
+
+[features]
+std = [
+	"bridge-hub-common/std",
+	"emulated-integration-tests-common/std",
+	"frame-support/std",
+	"sp-core/std"
+]
+runtime-benchmarks = [
+	"bridge-hub-common/runtime-benchmarks",
+	"bridge-hub-rococo-runtime/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"testnet-parachains-constants/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"bridge-hub-common/try-runtime",
+	"bridge-hub-rococo-runtime/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"frame-support/try-runtime",
+	"parachains-common/try-runtime",
+	"testnet-parachains-constants/try-runtime",
+	"sp-core/try-runtime"
+]

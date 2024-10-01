@@ -24,3 +24,14 @@ gum.workspace = true
 gum.default-features = true
 serde = { features = ["derive"], workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"gum/std"
+]
+runtime-benchmarks = [
+	"gum/runtime-benchmarks"
+]
+try-runtime = [
+	"gum/try-runtime"
+]

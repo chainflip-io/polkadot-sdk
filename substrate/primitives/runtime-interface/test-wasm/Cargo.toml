@@ -33,4 +33,17 @@ std = [
 	"sp-io/std",
 	"sp-runtime-interface/std",
 	"substrate-wasm-builder",
+	"substrate-wasm-builder?/std"
+]
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-runtime-interface/runtime-benchmarks",
+	"substrate-wasm-builder?/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime",
+	"sp-io/try-runtime",
+	"sp-runtime-interface/try-runtime",
+	"substrate-wasm-builder?/try-runtime"
 ]

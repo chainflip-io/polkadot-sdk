@@ -19,3 +19,14 @@ sp-core.workspace = true
 sp-core.default-features = true
 tokio = { features = ["time"], workspace = true, default-features = true }
 thiserror = { workspace = true }
+
+[features]
+std = [
+	"log/std"
+]
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime"
+]

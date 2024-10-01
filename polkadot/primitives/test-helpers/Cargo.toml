@@ -20,3 +20,22 @@ sp-core = { features = ["std"], workspace = true, default-features = true }
 polkadot-primitives.workspace = true
 polkadot-primitives.default-features = true
 rand = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"sp-application-crypto/std"
+]
+runtime-benchmarks = [
+	"polkadot-primitives/runtime-benchmarks",
+	"sp-keyring/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-application-crypto/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-primitives/try-runtime",
+	"sp-keyring/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-application-crypto/try-runtime",
+	"sp-core/try-runtime"
+]

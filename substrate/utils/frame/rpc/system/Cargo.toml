@@ -48,3 +48,37 @@ tokio = { workspace = true, default-features = true }
 assert_matches = { workspace = true }
 sp-tracing = { default-features = true, path = "../../../../primitives/tracing" }
 substrate-test-runtime-client = { path = "../../../../test-utils/runtime/client" }
+
+[features]
+std = [
+	"log/std",
+	"sc-rpc-api/std",
+	"sc-transaction-pool/std",
+	"sc-transaction-pool-api/std",
+	"sp-blockchain/std",
+	"substrate-test-runtime-client/std"
+]
+runtime-benchmarks = [
+	"sc-rpc-api/runtime-benchmarks",
+	"sc-transaction-pool/runtime-benchmarks",
+	"sc-transaction-pool-api/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-block-builder/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"substrate-test-runtime-client/runtime-benchmarks",
+	"frame-system-rpc-runtime-api/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-rpc-api/try-runtime",
+	"sc-transaction-pool/try-runtime",
+	"sc-transaction-pool-api/try-runtime",
+	"sp-api/try-runtime",
+	"sp-block-builder/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-runtime/try-runtime",
+	"substrate-test-runtime-client/try-runtime",
+	"frame-system-rpc-runtime-api/try-runtime",
+	"sp-core/try-runtime"
+]

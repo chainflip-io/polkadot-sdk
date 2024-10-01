@@ -108,6 +108,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	"polkadot-primitives-test-helpers/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -133,6 +134,21 @@ runtime-benchmarks = [
 	"sp-staking/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"xcm-executor/runtime-benchmarks",
+	"frame-support-test/runtime-benchmarks",
+	"pallet-authorship/runtime-benchmarks",
+	"pallet-session/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
+	"polkadot-primitives-test-helpers/runtime-benchmarks",
+	"slot-range-helper/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-inherents/runtime-benchmarks",
+	"sp-keyring/runtime-benchmarks",
+	"sp-npos-elections/runtime-benchmarks",
+	"sp-session/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"xcm/runtime-benchmarks",
+	"sp-keystore/runtime-benchmarks"
 ]
 try-runtime = [
 	"frame-election-provider-support/try-runtime",
@@ -154,4 +170,21 @@ try-runtime = [
 	"pallet-vesting/try-runtime",
 	"polkadot-runtime-parachains/try-runtime",
 	"sp-runtime/try-runtime",
+	"frame-support-test/try-runtime",
+	"frame-benchmarking?/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"polkadot-primitives-test-helpers/try-runtime",
+	"slot-range-helper/try-runtime",
+	"sp-api/try-runtime",
+	"sp-inherents/try-runtime",
+	"sp-keyring/try-runtime",
+	"sp-npos-elections/try-runtime",
+	"sp-session/try-runtime",
+	"sp-staking/try-runtime",
+	"xcm-builder/try-runtime",
+	"xcm-executor?/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime",
+	"xcm/try-runtime",
+	"sp-keystore/try-runtime"
 ]

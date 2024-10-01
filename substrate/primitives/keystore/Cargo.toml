@@ -33,3 +33,9 @@ std = ["codec/std", "dep:parking_lot", "sp-core/std", "sp-externalities/std"]
 # It should not be used in production since the implementation and interface may still
 # be subject to significant changes.
 bls-experimental = ["sp-core/bls-experimental"]
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime"
+]

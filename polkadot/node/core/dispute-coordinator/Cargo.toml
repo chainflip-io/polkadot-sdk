@@ -45,3 +45,40 @@ sp-tracing = { default-features = true, path = "../../../../substrate/primitives
 [features]
 # If not enabled, the dispute coordinator will do nothing.
 disputes = []
+std = [
+	"polkadot-node-primitives/std",
+	"polkadot-node-subsystem-test-helpers/std",
+	"polkadot-node-subsystem-util/std",
+	"polkadot-primitives-test-helpers/std",
+	"sc-keystore/std",
+	"gum/std",
+	"polkadot-node-subsystem/std"
+]
+runtime-benchmarks = [
+	"polkadot-node-primitives/runtime-benchmarks",
+	"polkadot-node-subsystem-test-helpers/runtime-benchmarks",
+	"polkadot-node-subsystem-util/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-primitives-test-helpers/runtime-benchmarks",
+	"sp-keyring/runtime-benchmarks",
+	"gum/runtime-benchmarks",
+	"polkadot-node-subsystem/runtime-benchmarks",
+	"sp-application-crypto/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"sc-keystore/runtime-benchmarks",
+	"sp-keystore/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-node-primitives/try-runtime",
+	"polkadot-node-subsystem/try-runtime",
+	"polkadot-node-subsystem-test-helpers/try-runtime",
+	"polkadot-node-subsystem-util/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"polkadot-primitives-test-helpers/try-runtime",
+	"sp-keyring/try-runtime",
+	"gum/try-runtime",
+	"sp-application-crypto/try-runtime",
+	"sp-core/try-runtime",
+	"sc-keystore/try-runtime",
+	"sp-keystore/try-runtime"
+]

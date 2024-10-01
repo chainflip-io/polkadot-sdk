@@ -16,3 +16,18 @@ generate-bags.default-features = true
 sp-io.workspace = true
 sp-io.default-features = true
 westend-runtime.workspace = true
+
+[features]
+std = [
+	"generate-bags/std"
+]
+runtime-benchmarks = [
+	"generate-bags/runtime-benchmarks",
+	"westend-runtime/runtime-benchmarks",
+	"sp-io/runtime-benchmarks"
+]
+try-runtime = [
+	"generate-bags/try-runtime",
+	"westend-runtime/try-runtime",
+	"sp-io/try-runtime"
+]

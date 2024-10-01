@@ -17,3 +17,19 @@ polkadot-primitives.workspace = true
 polkadot-primitives.default-features = true
 gum.workspace = true
 gum.default-features = true
+
+[features]
+std = [
+	"codec/std",
+	"gum/std"
+]
+runtime-benchmarks = [
+	"polkadot-primitives/runtime-benchmarks",
+	"gum/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-primitives/try-runtime",
+	"gum/try-runtime",
+	"sp-core/try-runtime"
+]

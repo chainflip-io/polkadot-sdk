@@ -22,3 +22,15 @@ sc-executor-common.workspace = true
 sc-executor-common.default-features = true
 sp-wasm-interface.workspace = true
 sp-wasm-interface.default-features = true
+
+[features]
+std = [
+	"log/std",
+	"sc-executor-common/std"
+]
+runtime-benchmarks = [
+	"sc-executor-common/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-executor-common/try-runtime"
+]

@@ -40,5 +40,14 @@ std = [
 	"scale-info/std",
 	"serde/std",
 	"sp-weights/std",
+	"xcm-procedural/std"
 ]
 json-schema = ["bounded-collections/json-schema", "dep:schemars", "sp-weights/json-schema"]
+runtime-benchmarks = [
+	"sp-io/runtime-benchmarks",
+	"xcm-procedural/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-io/try-runtime",
+	"xcm-procedural/try-runtime"
+]

@@ -15,3 +15,12 @@ tracing = { workspace = true, default-features = true }
 gum-proc-macro.workspace = true
 gum-proc-macro.default-features = true
 polkadot-primitives = { features = ["std"], workspace = true, default-features = true }
+
+[features]
+std = []
+runtime-benchmarks = [
+	"polkadot-primitives/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-primitives/try-runtime"
+]

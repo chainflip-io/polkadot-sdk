@@ -27,3 +27,20 @@ polkadot-primitives.default-features = true
 
 [features]
 builder = []
+std = [
+	"codec/std",
+	"polkadot-node-core-pvf-common/std",
+	"gum/std"
+]
+runtime-benchmarks = [
+	"polkadot-node-core-pvf-common/runtime-benchmarks",
+	"polkadot-parachain-primitives/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"gum/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-node-core-pvf-common/try-runtime",
+	"polkadot-parachain-primitives/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"gum/try-runtime"
+]

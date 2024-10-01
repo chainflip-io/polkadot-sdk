@@ -39,3 +39,14 @@ bls-experimental = [
 	"sp-core/bls-experimental",
 	"sp-keystore/bls-experimental",
 ]
+std = []
+runtime-benchmarks = [
+	"sp-application-crypto/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"sp-keystore/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-application-crypto/try-runtime",
+	"sp-core/try-runtime",
+	"sp-keystore/try-runtime"
+]

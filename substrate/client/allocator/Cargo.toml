@@ -23,3 +23,14 @@ sp-core.workspace = true
 sp-core.default-features = true
 sp-wasm-interface.workspace = true
 sp-wasm-interface.default-features = true
+
+[features]
+std = [
+	"log/std"
+]
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime"
+]

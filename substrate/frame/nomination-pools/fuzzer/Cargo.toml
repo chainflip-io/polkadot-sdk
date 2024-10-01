@@ -36,3 +36,22 @@ log = { workspace = true, default-features = true }
 [[bin]]
 name = "call"
 path = "src/call.rs"
+
+[features]
+std = [
+	"log/std"
+]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-nomination-pools/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-io/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-nomination-pools/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-io/try-runtime"
+]

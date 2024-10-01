@@ -32,3 +32,16 @@ serde = { features = ["derive"], workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 wasm-timer = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"sc-network/std",
+	"sc-utils/std"
+]
+runtime-benchmarks = [
+	"sc-network/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-network/try-runtime"
+]

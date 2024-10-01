@@ -27,3 +27,23 @@ sp-blockchain.workspace = true
 sp-blockchain.default-features = true
 sp-runtime.workspace = true
 sp-runtime.default-features = true
+
+[features]
+std = [
+	"fork-tree/std",
+	"sc-client-api/std",
+	"sc-consensus/std",
+	"sp-blockchain/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-consensus/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-consensus/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-runtime/try-runtime"
+]

@@ -39,3 +39,75 @@ snowbridge-pallet-system.workspace = true
 snowbridge-pallet-outbound-queue.workspace = true
 snowbridge-pallet-inbound-queue-fixtures.workspace = true
 snowbridge-pallet-inbound-queue-fixtures.default-features = true
+
+[features]
+std = [
+	"cumulus-pallet-xcmp-queue/std",
+	"emulated-integration-tests-common/std",
+	"frame-support/std",
+	"pallet-asset-conversion/std",
+	"pallet-assets/std",
+	"pallet-balances/std",
+	"pallet-bridge-messages/std",
+	"pallet-xcm/std",
+	"codec/std",
+	"scale-info/std",
+	"snowbridge-core/std",
+	"snowbridge-pallet-outbound-queue/std",
+	"snowbridge-pallet-system/std",
+	"snowbridge-router-primitives/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"xcm/std",
+	"xcm-executor/std",
+	"rococo-system-emulated-network/std",
+	"rococo-westend-system-emulated-network/std"
+]
+runtime-benchmarks = [
+	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-asset-conversion/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-bridge-messages/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"snowbridge-core/runtime-benchmarks",
+	"snowbridge-pallet-inbound-queue-fixtures/runtime-benchmarks",
+	"snowbridge-pallet-outbound-queue/runtime-benchmarks",
+	"snowbridge-pallet-system/runtime-benchmarks",
+	"snowbridge-router-primitives/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"testnet-parachains-constants/runtime-benchmarks",
+	"rococo-system-emulated-network/runtime-benchmarks",
+	"rococo-westend-system-emulated-network/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"xcm/runtime-benchmarks"
+]
+try-runtime = [
+	"cumulus-pallet-xcmp-queue/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-asset-conversion/try-runtime",
+	"pallet-assets/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-bridge-messages/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"pallet-xcm/try-runtime",
+	"parachains-common/try-runtime",
+	"snowbridge-core/try-runtime",
+	"snowbridge-pallet-outbound-queue/try-runtime",
+	"snowbridge-pallet-system/try-runtime",
+	"snowbridge-router-primitives/try-runtime",
+	"sp-runtime/try-runtime",
+	"xcm-executor/try-runtime",
+	"testnet-parachains-constants/try-runtime",
+	"rococo-system-emulated-network/try-runtime",
+	"rococo-westend-system-emulated-network/try-runtime",
+	"snowbridge-pallet-inbound-queue-fixtures/try-runtime",
+	"sp-core/try-runtime",
+	"xcm/try-runtime"
+]

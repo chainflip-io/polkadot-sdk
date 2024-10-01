@@ -27,3 +27,24 @@ thiserror = { workspace = true }
 tokio = { workspace = true, default-features = true }
 log = { workspace = true, default-features = true }
 codec = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"codec/std",
+	"polkadot-node-primitives/std",
+	"sc-network/std",
+	"sc-network-types/std"
+]
+runtime-benchmarks = [
+	"polkadot-node-primitives/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-node-primitives/try-runtime",
+	"polkadot-primitives/try-runtime",
+	"sc-network/try-runtime",
+	"sp-core/try-runtime"
+]

@@ -35,3 +35,23 @@ sp-runtime.default-features = true
 sp-state-machine.workspace = true
 sp-state-machine.default-features = true
 tracing = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"codec/std",
+	"sp-consensus/std"
+]
+runtime-benchmarks = [
+	"sp-api/runtime-benchmarks",
+	"sp-consensus/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-state-machine/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-api/try-runtime",
+	"sp-consensus/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-state-machine/try-runtime",
+	"sp-core/try-runtime"
+]

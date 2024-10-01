@@ -16,3 +16,20 @@ polkadot-node-subsystem-types.workspace = true
 polkadot-node-subsystem-types.default-features = true
 polkadot-node-jaeger.workspace = true
 polkadot-node-jaeger.default-features = true
+
+[features]
+std = [
+	"polkadot-node-jaeger/std",
+	"polkadot-node-subsystem-types/std",
+	"polkadot-overseer/std"
+]
+runtime-benchmarks = [
+	"polkadot-node-jaeger/runtime-benchmarks",
+	"polkadot-node-subsystem-types/runtime-benchmarks",
+	"polkadot-overseer/runtime-benchmarks"
+]
+try-runtime = [
+	"polkadot-node-jaeger/try-runtime",
+	"polkadot-node-subsystem-types/try-runtime",
+	"polkadot-overseer/try-runtime"
+]

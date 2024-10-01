@@ -17,3 +17,29 @@ asset-hub-rococo-emulated-chain.workspace = true
 bridge-hub-rococo-emulated-chain.workspace = true
 people-rococo-emulated-chain.workspace = true
 penpal-emulated-chain.workspace = true
+
+[features]
+std = [
+	"asset-hub-rococo-emulated-chain/std",
+	"bridge-hub-rococo-emulated-chain/std",
+	"emulated-integration-tests-common/std",
+	"penpal-emulated-chain/std",
+	"people-rococo-emulated-chain/std",
+	"rococo-emulated-chain/std"
+]
+runtime-benchmarks = [
+	"asset-hub-rococo-emulated-chain/runtime-benchmarks",
+	"bridge-hub-rococo-emulated-chain/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"penpal-emulated-chain/runtime-benchmarks",
+	"people-rococo-emulated-chain/runtime-benchmarks",
+	"rococo-emulated-chain/runtime-benchmarks"
+]
+try-runtime = [
+	"asset-hub-rococo-emulated-chain/try-runtime",
+	"bridge-hub-rococo-emulated-chain/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"penpal-emulated-chain/try-runtime",
+	"people-rococo-emulated-chain/try-runtime",
+	"rococo-emulated-chain/try-runtime"
+]

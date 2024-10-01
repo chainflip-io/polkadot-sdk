@@ -43,6 +43,10 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"sp-inherents/runtime-benchmarks",
+	"sp-transaction-storage-proof/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
 ]
 std = [
 	"codec/std",
@@ -57,10 +61,16 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-transaction-storage-proof/std",
+	"sp-core/std"
 ]
 try-runtime = [
 	"frame-support/try-runtime",
 	"frame-system/try-runtime",
 	"pallet-balances/try-runtime",
 	"sp-runtime/try-runtime",
+	"frame-benchmarking?/try-runtime",
+	"sp-inherents/try-runtime",
+	"sp-transaction-storage-proof/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime"
 ]

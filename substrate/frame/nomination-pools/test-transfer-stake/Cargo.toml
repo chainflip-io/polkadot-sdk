@@ -38,3 +38,39 @@ pallet-nomination-pools = { default-features = true, path = ".." }
 
 sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
 log = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"log/std",
+	"pallet-staking-reward-curve/std"
+]
+runtime-benchmarks = [
+	"frame-election-provider-support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-bags-list/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-nomination-pools/runtime-benchmarks",
+	"pallet-staking/runtime-benchmarks",
+	"pallet-staking-reward-curve/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-staking/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-election-provider-support/try-runtime",
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-bags-list/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-nomination-pools/try-runtime",
+	"pallet-staking/try-runtime",
+	"pallet-staking-reward-curve/try-runtime",
+	"pallet-timestamp/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-staking/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime"
+]

@@ -22,3 +22,20 @@ honggfuzz = { workspace = true }
 frame-support = { features = ["std"], workspace = true }
 sp-io = { features = ["std"], workspace = true }
 pallet-paged-list = { features = ["std"], workspace = true }
+
+[features]
+std = [
+	"frame-support/std",
+	"pallet-paged-list/std",
+	"sp-io/std"
+]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"pallet-paged-list/runtime-benchmarks",
+	"sp-io/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"pallet-paged-list/try-runtime",
+	"sp-io/try-runtime"
+]

@@ -70,3 +70,48 @@ sc-block-builder = { default-features = true, path = "../../block-builder" }
 sp-test-primitives = { path = "../../../primitives/test-primitives" }
 sp-tracing = { default-features = true, path = "../../../primitives/tracing" }
 substrate-test-runtime-client = { path = "../../../test-utils/runtime/client" }
+
+[features]
+std = [
+	"fork-tree/std",
+	"log/std",
+	"sc-block-builder/std",
+	"sc-client-api/std",
+	"sc-consensus/std",
+	"sc-network/std",
+	"sc-network-common/std",
+	"sc-network-types/std",
+	"sc-utils/std",
+	"sp-blockchain/std",
+	"sp-consensus/std",
+	"prometheus-endpoint/std",
+	"substrate-test-runtime-client/std"
+]
+runtime-benchmarks = [
+	"sc-block-builder/runtime-benchmarks",
+	"sc-client-api/runtime-benchmarks",
+	"sc-consensus/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sc-network-common/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-consensus/runtime-benchmarks",
+	"sp-consensus-grandpa/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-test-primitives/runtime-benchmarks",
+	"substrate-test-runtime-client/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-block-builder/try-runtime",
+	"sc-client-api/try-runtime",
+	"sc-consensus/try-runtime",
+	"sc-network/try-runtime",
+	"sc-network-common/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-consensus/try-runtime",
+	"sp-consensus-grandpa/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-test-primitives/try-runtime",
+	"substrate-test-runtime-client/try-runtime",
+	"sp-core/try-runtime"
+]

@@ -28,3 +28,51 @@ emulated-integration-tests-common.workspace = true
 parachains-common.workspace = true
 parachains-common.default-features = true
 rococo-westend-system-emulated-network.workspace = true
+
+[features]
+std = [
+	"cumulus-pallet-xcmp-queue/std",
+	"emulated-integration-tests-common/std",
+	"frame-support/std",
+	"pallet-asset-conversion/std",
+	"pallet-assets/std",
+	"pallet-balances/std",
+	"pallet-bridge-messages/std",
+	"pallet-xcm/std",
+	"sp-runtime/std",
+	"xcm/std",
+	"xcm-executor/std",
+	"rococo-westend-system-emulated-network/std"
+]
+runtime-benchmarks = [
+	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-asset-conversion/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-bridge-messages/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"rococo-westend-system-emulated-network/runtime-benchmarks",
+	"xcm/runtime-benchmarks"
+]
+try-runtime = [
+	"cumulus-pallet-xcmp-queue/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-asset-conversion/try-runtime",
+	"pallet-assets/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-bridge-messages/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"pallet-xcm/try-runtime",
+	"parachains-common/try-runtime",
+	"sp-runtime/try-runtime",
+	"xcm-executor/try-runtime",
+	"rococo-westend-system-emulated-network/try-runtime",
+	"xcm/try-runtime"
+]

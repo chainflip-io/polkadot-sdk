@@ -26,3 +26,47 @@ emulated-integration-tests-common.workspace = true
 parachains-common.workspace = true
 parachains-common.default-features = true
 westend-system-emulated-network.workspace = true
+
+[features]
+std = [
+	"emulated-integration-tests-common/std",
+	"frame-support/std",
+	"pallet-balances/std",
+	"pallet-identity/std",
+	"pallet-message-queue/std",
+	"codec/std",
+	"sp-runtime/std",
+	"xcm/std",
+	"xcm-executor/std",
+	"westend-system-emulated-network/std"
+]
+runtime-benchmarks = [
+	"asset-test-utils/runtime-benchmarks",
+	"emulated-integration-tests-common/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-identity/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"polkadot-runtime-common/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"westend-runtime-constants/runtime-benchmarks",
+	"westend-system-emulated-network/runtime-benchmarks",
+	"xcm/runtime-benchmarks"
+]
+try-runtime = [
+	"asset-test-utils/try-runtime",
+	"emulated-integration-tests-common/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-identity/try-runtime",
+	"pallet-message-queue/try-runtime",
+	"parachains-common/try-runtime",
+	"polkadot-runtime-common/try-runtime",
+	"sp-runtime/try-runtime",
+	"xcm-executor/try-runtime",
+	"westend-runtime-constants/try-runtime",
+	"westend-system-emulated-network/try-runtime",
+	"xcm/try-runtime"
+]

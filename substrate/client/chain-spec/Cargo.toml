@@ -56,3 +56,48 @@ sp-keyring = { default-features = true, path = "../../primitives/keyring" }
 sp-application-crypto = { features = ["serde"], path = "../../primitives/application-crypto", default-features = false }
 sp-consensus-babe = { features = ["serde"], path = "../../primitives/consensus/babe", default-features = false }
 regex = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"codec/std",
+	"sc-client-api/std",
+	"sc-network/std",
+	"sc-telemetry/std",
+	"sp-application-crypto/std",
+	"sp-blockchain/std",
+	"sp-consensus-babe/std",
+	"sp-io/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-executor/runtime-benchmarks",
+	"sc-network/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-consensus-babe/runtime-benchmarks",
+	"sp-genesis-builder/runtime-benchmarks",
+	"sp-keyring/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-state-machine/runtime-benchmarks",
+	"substrate-test-runtime/runtime-benchmarks",
+	"sc-telemetry/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-application-crypto/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-executor/try-runtime",
+	"sc-network/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-consensus-babe/try-runtime",
+	"sp-genesis-builder/try-runtime",
+	"sp-keyring/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-state-machine/try-runtime",
+	"substrate-test-runtime/try-runtime",
+	"sc-telemetry/try-runtime",
+	"sp-io/try-runtime",
+	"sp-application-crypto/try-runtime",
+	"sp-core/try-runtime"
+]

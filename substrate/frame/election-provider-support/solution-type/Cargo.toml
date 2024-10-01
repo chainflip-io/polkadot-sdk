@@ -31,3 +31,14 @@ sp-arithmetic = { default-features = true, path = "../../../primitives/arithmeti
 frame-election-provider-support = { default-features = true, path = ".." }
 frame-support = { default-features = true, path = "../../support" }
 trybuild = { workspace = true }
+
+[features]
+std = []
+runtime-benchmarks = [
+	"frame-election-provider-support/runtime-benchmarks",
+	"frame-support/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-election-provider-support/try-runtime",
+	"frame-support/try-runtime"
+]

@@ -31,3 +31,22 @@ sp-runtime.default-features = true
 
 [dev-dependencies]
 serde_json = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"sp-blockchain/std"
+]
+runtime-benchmarks = [
+	"sp-api/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-mmr-primitives/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-api/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-mmr-primitives/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

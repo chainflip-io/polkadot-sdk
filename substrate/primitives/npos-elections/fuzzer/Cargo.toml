@@ -40,3 +40,14 @@ path = "src/phragmms_balancing.rs"
 [[bin]]
 name = "phragmen_pjr"
 path = "src/phragmen_pjr.rs"
+
+[features]
+std = []
+runtime-benchmarks = [
+	"sp-npos-elections/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-npos-elections/try-runtime",
+	"sp-runtime/try-runtime"
+]

@@ -25,3 +25,22 @@ relay-substrate-client.workspace = true
 codec = { workspace = true, default-features = true }
 relay-substrate-client = { features = ["test-helpers"], path = "../client-substrate" }
 sp-core = { default-features = true, path = "../../../substrate/primitives/core" }
+
+[features]
+std = [
+	"log/std",
+	"relay-substrate-client/std",
+	"relay-utils/std"
+]
+runtime-benchmarks = [
+	"bp-polkadot-core/runtime-benchmarks",
+	"relay-substrate-client/runtime-benchmarks",
+	"relay-utils/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"bp-polkadot-core/try-runtime",
+	"relay-substrate-client/try-runtime",
+	"relay-utils/try-runtime",
+	"sp-core/try-runtime"
+]

@@ -27,3 +27,19 @@ log = { workspace = true, default-features = true }
 [dev-dependencies]
 tokio = { features = ["macros", "rt-multi-thread", "sync"], workspace = true, default-features = true }
 sp-core = { default-features = true, path = "../../../../primitives/core" }
+
+[features]
+std = [
+	"log/std",
+	"sc-rpc-api/std"
+]
+runtime-benchmarks = [
+	"sc-rpc-api/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-rpc-api/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

@@ -36,3 +36,26 @@ sp-runtime.default-features = true
 
 [dev-dependencies]
 serde_json = { workspace = true, default-features = true }
+
+[features]
+std = [
+	"codec/std",
+	"sc-client-api/std",
+	"sc-rpc-api/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sc-rpc-api/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-state-machine/runtime-benchmarks",
+	"sp-trie/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sc-rpc-api/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-state-machine/try-runtime",
+	"sp-trie/try-runtime",
+	"sp-core/try-runtime"
+]

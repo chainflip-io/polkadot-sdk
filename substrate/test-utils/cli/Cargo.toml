@@ -34,4 +34,26 @@ sc-service.default-features = true
 futures = { workspace = true }
 
 [features]
-try-runtime = ["node-cli/try-runtime"]
+try-runtime = [
+	"node-cli/try-runtime",
+	"node-primitives/try-runtime",
+	"sc-cli/try-runtime",
+	"sc-service/try-runtime",
+	"substrate-rpc-client/try-runtime",
+	"sp-rpc/try-runtime"
+]
+std = [
+	"sc-cli/std",
+	"sc-service/std",
+	"sp-rpc/std",
+	"node-cli/std",
+	"substrate-rpc-client/std"
+]
+runtime-benchmarks = [
+	"node-primitives/runtime-benchmarks",
+	"sc-cli/runtime-benchmarks",
+	"sc-service/runtime-benchmarks",
+	"node-cli/runtime-benchmarks",
+	"substrate-rpc-client/runtime-benchmarks",
+	"sp-rpc/runtime-benchmarks"
+]

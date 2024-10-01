@@ -40,3 +40,30 @@ sc-keystore.default-features = true
 [dev-dependencies]
 tempfile = { workspace = true }
 env_logger = { workspace = true }
+
+[features]
+std = [
+	"log/std",
+	"sc-client-api/std",
+	"sc-keystore/std",
+	"sp-blockchain/std",
+	"prometheus-endpoint/std"
+]
+runtime-benchmarks = [
+	"sc-client-api/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-statement-store/runtime-benchmarks",
+	"sp-core/runtime-benchmarks",
+	"sc-keystore/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-client-api/try-runtime",
+	"sp-api/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-statement-store/try-runtime",
+	"sp-core/try-runtime",
+	"sc-keystore/try-runtime"
+]

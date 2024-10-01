@@ -62,6 +62,9 @@ runtime-benchmarks = [
 	"pallet-identity/runtime-benchmarks",
 	"sp-crypto-hashing",
 	"sp-runtime/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"sp-io/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
 ]
 try-runtime = [
 	"frame-support/try-runtime",
@@ -69,4 +72,8 @@ try-runtime = [
 	"pallet-collective?/try-runtime",
 	"pallet-identity/try-runtime",
 	"sp-runtime/try-runtime",
+	"pallet-balances/try-runtime",
+	"frame-benchmarking?/try-runtime",
+	"sp-io/try-runtime",
+	"sp-core/try-runtime"
 ]

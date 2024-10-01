@@ -23,3 +23,12 @@ sp-core.default-features = true
 
 [dev-dependencies]
 serde_json = { workspace = true, default-features = true }
+
+[features]
+std = []
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime"
+]

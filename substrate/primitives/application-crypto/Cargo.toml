@@ -53,3 +53,11 @@ full_crypto = [
 # It should not be used in production since the implementation and interface may still
 # be subject to significant changes.
 bls-experimental = ["sp-core/bls-experimental", "sp-io/bls-experimental"]
+runtime-benchmarks = [
+	"sp-core/runtime-benchmarks",
+	"sp-io/runtime-benchmarks"
+]
+try-runtime = [
+	"sp-core/try-runtime",
+	"sp-io/try-runtime"
+]

@@ -35,3 +35,37 @@ sp-runtime.workspace = true
 sp-runtime.default-features = true
 substrate-test-client.workspace = true
 substrate-test-runtime.workspace = true
+
+[features]
+std = [
+	"sc-block-builder/std",
+	"sc-client-api/std",
+	"sc-consensus/std",
+	"sp-blockchain/std",
+	"sp-consensus/std",
+	"substrate-test-client/std"
+]
+runtime-benchmarks = [
+	"sc-block-builder/runtime-benchmarks",
+	"sc-client-api/runtime-benchmarks",
+	"sc-consensus/runtime-benchmarks",
+	"sp-api/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-consensus/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"substrate-test-client/runtime-benchmarks",
+	"substrate-test-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-block-builder/try-runtime",
+	"sc-client-api/try-runtime",
+	"sc-consensus/try-runtime",
+	"sp-api/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-consensus/try-runtime",
+	"sp-runtime/try-runtime",
+	"substrate-test-client/try-runtime",
+	"substrate-test-runtime/try-runtime",
+	"sp-core/try-runtime"
+]

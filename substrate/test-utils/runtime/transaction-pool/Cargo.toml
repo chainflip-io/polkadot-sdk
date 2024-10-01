@@ -29,3 +29,25 @@ sp-blockchain.default-features = true
 sp-runtime.workspace = true
 sp-runtime.default-features = true
 substrate-test-runtime-client.workspace = true
+
+[features]
+std = [
+	"sc-transaction-pool/std",
+	"sc-transaction-pool-api/std",
+	"sp-blockchain/std",
+	"substrate-test-runtime-client/std"
+]
+runtime-benchmarks = [
+	"sc-transaction-pool/runtime-benchmarks",
+	"sc-transaction-pool-api/runtime-benchmarks",
+	"sp-blockchain/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"substrate-test-runtime-client/runtime-benchmarks"
+]
+try-runtime = [
+	"sc-transaction-pool/try-runtime",
+	"sc-transaction-pool-api/try-runtime",
+	"sp-blockchain/try-runtime",
+	"sp-runtime/try-runtime",
+	"substrate-test-runtime-client/try-runtime"
+]

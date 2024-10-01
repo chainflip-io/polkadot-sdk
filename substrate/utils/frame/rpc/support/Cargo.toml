@@ -32,3 +32,22 @@ tokio = { workspace = true, default-features = true }
 sp-core = { default-features = true, path = "../../../../primitives/core" }
 sp-runtime = { default-features = true, path = "../../../../primitives/runtime" }
 frame-system = { default-features = true, path = "../../../../frame/system" }
+
+[features]
+std = [
+	"sc-rpc-api/std"
+]
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"sc-rpc-api/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"sp-core/runtime-benchmarks"
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"sc-rpc-api/try-runtime",
+	"sp-runtime/try-runtime",
+	"sp-core/try-runtime"
+]
