@@ -28,11 +28,14 @@ use crate::{
 use sc_network::{
 	config::ProtocolId,
 	request_responses::{IncomingRequest, OutgoingResponse},
-	NetworkBackend, MAX_RESPONSE_SIZE,
+	NetworkBackend,
 };
 use sp_runtime::traits::Block as BlockT;
 
 use std::{sync::Arc, time::Duration};
+
+/// (Chainflip) Increased maximum response size for warp sync requests.
+const MAX_RESPONSE_SIZE_WARP: u64 = 32 * 1024 * 1024;
 
 /// Incoming warp requests bounded queue size.
 const MAX_WARP_REQUEST_QUEUE: usize = 20;
@@ -53,7 +56,7 @@ pub fn generate_request_response_config<
 		generate_protocol_name(genesis_hash, fork_id).into(),
 		std::iter::once(generate_legacy_protocol_name(protocol_id).into()).collect(),
 		32,
-		MAX_RESPONSE_SIZE,
+		MAX_RESPONSE_SIZE_WARP,
 		Duration::from_secs(10),
 		Some(inbound_queue),
 	)
