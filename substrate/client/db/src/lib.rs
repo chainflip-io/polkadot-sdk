@@ -312,6 +312,8 @@ pub struct DatabaseSettings {
 	///
 	/// NOTE: only finalized blocks are subject for removal!
 	pub blocks_pruning: BlocksPruning,
+	/// Try to compactify DB regularly
+	pub limit_size: bool,
 }
 
 /// Block pruning settings.
@@ -1126,16 +1128,24 @@ impl<Block: BlockT> Backend<Block> {
 
 		let db_source = &db_config.source;
 
-		let (needs_init, db) =
-			match crate::utils::open_database::<Block>(db_source, DatabaseType::Full, false) {
-				Ok(db) => (false, db),
-				Err(OpenDbError::DoesNotExist) => {
-					let db =
-						crate::utils::open_database::<Block>(db_source, DatabaseType::Full, true)?;
-					(true, db)
-				},
-				Err(as_is) => return Err(as_is.into()),
-			};
+		let (needs_init, db) = match crate::utils::open_database::<Block>(
+			db_source,
+			DatabaseType::Full,
+			false,
+			db_config.limit_size,
+		) {
+			Ok(db) => (false, db),
+			Err(OpenDbError::DoesNotExist) => {
+				let db = crate::utils::open_database::<Block>(
+					db_source,
+					DatabaseType::Full,
+					true,
+					db_config.limit_size,
+				)?;
+				(true, db)
+			},
+			Err(as_is) => return Err(as_is.into()),
+		};
 
 		Self::from_database(db as Arc<_>, canonicalization_delay, &db_config, needs_init)
 	}
@@ -1171,6 +1181,7 @@ impl<Block: BlockT> Backend<Block> {
 			state_pruning: Some(state_pruning),
 			source: DatabaseSource::Custom { db, require_create_flag: true },
 			blocks_pruning,
+			limit_size: false,
 		};
 
 		Self::new(db_setting, canonicalization_delay).expect("failed to create test-db")
@@ -2772,6 +2783,7 @@ pub(crate) mod tests {
 				state_pruning: Some(PruningMode::blocks_pruning(1)),
 				source: DatabaseSource::Custom { db: backing, require_create_flag: false },
 				blocks_pruning: BlocksPruning::KeepFinalized,
+				limit_size: false,
 			},
 			0,
 		)

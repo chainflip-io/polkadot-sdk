@@ -218,6 +218,8 @@ pub enum ChainSyncMode {
 		/// Download indexed transactions for recent blocks.
 		storage_chain_mode: bool,
 	},
+	/// Minimize start-up time and disk space. (RocksDB only)
+	LightRpc,
 }
 
 /// All the data we have about a Peer that we are trying to sync with
@@ -1516,7 +1518,7 @@ where
 
 	fn required_block_attributes(&self) -> BlockAttributes {
 		match self.mode {
-			ChainSyncMode::Full =>
+			ChainSyncMode::Full | ChainSyncMode::LightRpc =>
 				BlockAttributes::HEADER | BlockAttributes::JUSTIFICATION | BlockAttributes::BODY,
 			ChainSyncMode::LightState { storage_chain_mode: false, .. } =>
 				BlockAttributes::HEADER | BlockAttributes::JUSTIFICATION | BlockAttributes::BODY,
@@ -1529,7 +1531,7 @@ where
 
 	fn skip_execution(&self) -> bool {
 		match self.mode {
-			ChainSyncMode::Full => false,
+			ChainSyncMode::Full | ChainSyncMode::LightRpc => false,
 			ChainSyncMode::LightState { .. } => true,
 		}
 	}
@@ -1705,12 +1707,14 @@ where
 		}
 
 		if let Some(BlockGap { start, end, .. }) = info.block_gap {
-			debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
-			self.gap_sync = Some(GapSync {
-				best_queued_number: start - One::one(),
-				target: end,
-				blocks: BlockCollection::new(),
-			});
+			if self.mode != ChainSyncMode::LightRpc {
+				debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
+				self.gap_sync = Some(GapSync {
+					best_queued_number: start - One::one(),
+					target: end,
+					blocks: BlockCollection::new(),
+				});
+			}
 		}
 		trace!(
 			target: LOG_TARGET,
