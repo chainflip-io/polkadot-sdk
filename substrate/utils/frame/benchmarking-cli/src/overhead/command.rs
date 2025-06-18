@@ -491,6 +491,7 @@ impl OverheadCmd {
 			blocks_pruning: BlocksPruning::KeepAll,
 			source: database_source,
 			metrics_registry: None,
+			limit_size: false,
 		})?;
 
 		let genesis_block_builder = GenesisBlockBuilder::new_with_storage(
