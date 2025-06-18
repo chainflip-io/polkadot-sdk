@@ -1526,7 +1526,10 @@ where
 		+ 'static,
 	Net: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
-	if warp_sync_config.is_none() && net_config.network_config.sync_mode.is_warp() {
+	if warp_sync_config.is_none() &&
+		(net_config.network_config.sync_mode.is_warp() ||
+			net_config.network_config.sync_mode.is_light_rpc())
+	{
 		return Err("Warp sync enabled, but no warp sync provider configured.".into());
 	}
 
@@ -1536,6 +1539,8 @@ where
 				return Err("Fast sync doesn't work for archive nodes".into())
 			},
 			SyncMode::Warp => return Err("Warp sync doesn't work for archive nodes".into()),
+			SyncMode::LightRpc =>
+				return Err("Light RPC sync doesn't work for archive nodes".into()),
 			SyncMode::Full => {},
 		}
 	}

@@ -127,6 +127,7 @@ fn create_backend(config: BenchmarkConfig, temp_dir: &TempDir) -> Backend<Block>
 		blocks_pruning: BlocksPruning::KeepAll,
 		pruning_filters: Default::default(),
 		metrics_registry: None,
+		limit_size: false,
 	};
 
 	Backend::new(settings, 100).expect("Creates backend")

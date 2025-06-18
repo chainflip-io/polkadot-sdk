@@ -393,6 +393,7 @@ impl BenchDb {
 			blocks_pruning: sc_client_db::BlocksPruning::KeepAll,
 			pruning_filters: Default::default(),
 			metrics_registry: None,
+			limit_size: false,
 		};
 		let task_executor = TaskExecutor::new();
 
