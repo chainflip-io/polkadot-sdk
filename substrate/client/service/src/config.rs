@@ -225,7 +225,10 @@ impl Configuration {
 	/// Returns true if the genesis state writing will be skipped while initializing the genesis
 	/// block.
 	pub fn no_genesis(&self) -> bool {
-		matches!(self.network.sync_mode, SyncMode::LightState { .. } | SyncMode::Warp { .. })
+		matches!(
+			self.network.sync_mode,
+			SyncMode::LightState { .. } | SyncMode::Warp { .. } | SyncMode::LightRpc { .. }
+		)
 	}
 
 	/// Returns the database config for creating the backend.
@@ -236,6 +239,7 @@ impl Configuration {
 			source: self.database.clone(),
 			blocks_pruning: self.blocks_pruning,
 			metrics_registry: self.prometheus_registry().cloned(),
+			limit_size: self.network.sync_mode == SyncMode::LightRpc,
 		}
 	}
 }
