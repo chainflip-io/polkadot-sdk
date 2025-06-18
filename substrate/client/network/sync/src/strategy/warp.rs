@@ -47,8 +47,9 @@ use sp_runtime::{
 };
 use std::{any::Any, collections::HashMap, fmt, sync::Arc};
 
+// CHAINFLIP: reduced to 1 for LightRpc mode.
 /// Number of peers that need to be connected before warp sync is started.
-const MIN_PEERS_TO_START_WARP_SYNC: usize = 3;
+const MIN_PEERS_TO_START_WARP_SYNC: usize = 1;
 
 /// Scale-encoded warp sync proof response.
 pub struct EncodedProof(pub Vec<u8>);

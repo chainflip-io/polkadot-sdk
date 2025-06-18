@@ -316,6 +316,8 @@ pub struct DatabaseSettings {
 
 	/// Prometheus metrics registry.
 	pub metrics_registry: Option<Registry>,
+	/// Try to compactify DB regularly
+	pub limit_size: bool,
 }
 
 /// Block pruning settings.
@@ -1130,16 +1132,24 @@ impl<Block: BlockT> Backend<Block> {
 
 		let db_source = &db_config.source;
 
-		let (needs_init, db) =
-			match crate::utils::open_database::<Block>(db_source, DatabaseType::Full, false) {
-				Ok(db) => (false, db),
-				Err(OpenDbError::DoesNotExist) => {
-					let db =
-						crate::utils::open_database::<Block>(db_source, DatabaseType::Full, true)?;
-					(true, db)
-				},
-				Err(as_is) => return Err(as_is.into()),
-			};
+		let (needs_init, db) = match crate::utils::open_database::<Block>(
+			db_source,
+			DatabaseType::Full,
+			false,
+			db_config.limit_size,
+		) {
+			Ok(db) => (false, db),
+			Err(OpenDbError::DoesNotExist) => {
+				let db = crate::utils::open_database::<Block>(
+					db_source,
+					DatabaseType::Full,
+					true,
+					db_config.limit_size,
+				)?;
+				(true, db)
+			},
+			Err(as_is) => return Err(as_is.into()),
+		};
 
 		Self::from_database(db as Arc<_>, canonicalization_delay, &db_config, needs_init)
 	}
@@ -1176,6 +1186,7 @@ impl<Block: BlockT> Backend<Block> {
 			source: DatabaseSource::Custom { db, require_create_flag: true },
 			blocks_pruning,
 			metrics_registry: None,
+			limit_size: false,
 		};
 
 		Self::new(db_setting, canonicalization_delay).expect("failed to create test-db")
@@ -2814,6 +2825,7 @@ pub(crate) mod tests {
 				source: DatabaseSource::Custom { db: backing, require_create_flag: false },
 				blocks_pruning: BlocksPruning::KeepFinalized,
 				metrics_registry: None,
+				limit_size: false,
 			},
 			0,
 		)
