@@ -1498,6 +1498,7 @@ fn doesnt_import_blocks_that_revert_finality() {
 				pruning_filters: Default::default(),
 				source: DatabaseSource::RocksDb { path: tmp.path().into(), cache_size: 1024 },
 				metrics_registry: None,
+				limit_size: false,
 			},
 			u64::MAX,
 		)
@@ -1780,6 +1781,7 @@ fn returns_status_for_pruned_blocks() {
 				pruning_filters: Default::default(),
 				source: DatabaseSource::RocksDb { path: tmp.path().into(), cache_size: 1024 },
 				metrics_registry: None,
+				limit_size: false,
 			},
 			u64::MAX,
 		)
