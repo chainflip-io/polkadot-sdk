@@ -303,13 +303,17 @@ pub enum ChainSyncMode {
 		/// Download indexed transactions for recent blocks.
 		storage_chain_mode: bool,
 	},
+	/// Minimize start-up time and disk space. (RocksDB only)
+	LightRpc,
 }
 
 impl ChainSyncMode {
 	/// Returns the base block attributes required for this sync mode.
 	pub fn required_block_attributes(&self) -> BlockAttributes {
 		match self {
-			ChainSyncMode::Full | ChainSyncMode::LightState { storage_chain_mode: false, .. } => {
+			ChainSyncMode::Full |
+			ChainSyncMode::LightRpc |
+			ChainSyncMode::LightState { storage_chain_mode: false, .. } => {
 				BlockAttributes::HEADER | BlockAttributes::JUSTIFICATION | BlockAttributes::BODY
 			},
 			ChainSyncMode::LightState { storage_chain_mode: true, .. } => {
@@ -1751,7 +1755,7 @@ where
 
 	fn skip_execution(&self) -> bool {
 		match self.mode {
-			ChainSyncMode::Full => false,
+			ChainSyncMode::Full | ChainSyncMode::LightRpc => false,
 			ChainSyncMode::LightState { .. } => true,
 		}
 	}
@@ -1934,14 +1938,16 @@ where
 		}
 
 		if let Some(BlockGap { start, end, .. }) = info.block_gap {
-			let old_gap = self.gap_sync.take().map(|g| (g.best_queued_number, g.target));
-			debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end} (old gap best and target: {old_gap:?})");
-			self.gap_sync = Some(GapSync {
-				best_queued_number: start - One::one(),
-				target: end,
-				blocks: BlockCollection::new(),
-				stats: GapSyncStats::new(),
-			});
+			if self.mode != ChainSyncMode::LightRpc {
+				let old_gap = self.gap_sync.take().map(|g| (g.best_queued_number, g.target));
+				debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end} (old gap best and target: {old_gap:?})");
+				self.gap_sync = Some(GapSync {
+					best_queued_number: start - One::one(),
+					target: end,
+					blocks: BlockCollection::new(),
+					stats: GapSyncStats::new(),
+				});
+			}
 		}
 		trace!(
 			target: LOG_TARGET,
