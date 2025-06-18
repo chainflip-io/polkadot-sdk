@@ -51,6 +51,7 @@ fn chain_sync_mode(sync_mode: SyncMode) -> ChainSyncMode {
 			ChainSyncMode::LightState { skip_proofs, storage_chain_mode }
 		},
 		SyncMode::Warp => ChainSyncMode::Full,
+		SyncMode::LightRpc => ChainSyncMode::LightRpc,
 	}
 }
 
@@ -361,9 +362,9 @@ where
 			config.max_blocks_per_request = MAX_BLOCKS_IN_RESPONSE as u32;
 		}
 
-		if let SyncMode::Warp = config.mode {
+		if matches!(config.mode, SyncMode::Warp | SyncMode::LightRpc) {
 			let warp_sync_config = warp_sync_config
-				.expect("Warp sync configuration must be supplied in warp sync mode.");
+				.expect("Warp sync configuration must be supplied in warp sync or Light RPC mode.");
 			let warp_sync = WarpSync::new(
 				client.clone(),
 				warp_sync_config,
