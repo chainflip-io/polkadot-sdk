@@ -209,6 +209,7 @@ mod tests {
 			&DatabaseSource::RocksDb { path: db_path.to_owned(), cache_size: 128 },
 			db_type,
 			true,
+			false,
 		)
 		.map(|_| ())
 		.map_err(|e| sp_blockchain::Error::Backend(e.to_string()))
