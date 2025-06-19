@@ -278,6 +278,8 @@ pub enum SyncMode {
 	FastUnsafe,
 	/// Prove finality and download the latest state.
 	Warp,
+	/// Minimize start-up time and disk space. (RocksDB only)
+	LightRpc,
 }
 
 impl Into<sc_network::config::SyncMode> for SyncMode {
@@ -293,6 +295,7 @@ impl Into<sc_network::config::SyncMode> for SyncMode {
 				storage_chain_mode: false,
 			},
 			SyncMode::Warp => sc_network::config::SyncMode::Warp,
+			SyncMode::LightRpc => sc_network::config::SyncMode::LightRpc,
 		}
 	}
 }
