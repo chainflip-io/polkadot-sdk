@@ -278,7 +278,7 @@ pub enum SyncMode {
 	FastUnsafe,
 	/// Prove finality and download the latest state.
 	Warp,
-	/// Minimize start-up time and disk space. (RocksDB only)
+	/// Minimize start-up time and disk space. (BETA, RocksDB only)
 	LightRpc,
 }
 

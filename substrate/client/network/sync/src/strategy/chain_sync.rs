@@ -242,7 +242,7 @@ pub enum ChainSyncMode {
 		/// Download indexed transactions for recent blocks.
 		storage_chain_mode: bool,
 	},
-	/// minimize startup-time and disk space
+	/// minimize startup-time and disk space (BETA, RocksDB only)
 	LightRpc,
 }
 
