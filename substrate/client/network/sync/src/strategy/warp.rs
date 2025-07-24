@@ -40,7 +40,7 @@ use sp_runtime::{
 use std::{collections::HashMap, fmt, sync::Arc};
 
 /// Number of peers that need to be connected before warp sync is started.
-const MIN_PEERS_TO_START_WARP_SYNC: usize = 3;
+const MIN_PEERS_TO_START_WARP_SYNC: usize = 1;
 
 /// Scale-encoded warp sync proof response.
 pub struct EncodedProof(pub Vec<u8>);
@@ -103,7 +103,7 @@ mod rep {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum WarpSyncPhase<Block: BlockT> {
 	/// Waiting for peers to connect.
-	AwaitingPeers { required_peers: usize },
+	AwaitingPeers,
 	/// Waiting for target block to be received.
 	AwaitingTargetBlock,
 	/// Downloading and verifying grandpa warp proofs.
@@ -123,8 +123,8 @@ pub enum WarpSyncPhase<Block: BlockT> {
 impl<Block: BlockT> fmt::Display for WarpSyncPhase<Block> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Self::AwaitingPeers { required_peers } =>
-				write!(f, "Waiting for {required_peers} peers to be connected"),
+			Self::AwaitingPeers =>
+				write!(f, "Waiting for enough peers to be connected"),
 			Self::AwaitingTargetBlock => write!(f, "Waiting for target block to be received"),
 			Self::DownloadingWarpProofs => write!(f, "Downloading finality proofs"),
 			Self::DownloadingTargetBlock => write!(f, "Downloading target block"),
@@ -565,9 +565,7 @@ where
 	pub fn progress(&self) -> WarpSyncProgress<B> {
 		match &self.phase {
 			Phase::WaitingForPeers { .. } => WarpSyncProgress {
-				phase: WarpSyncPhase::AwaitingPeers {
-					required_peers: MIN_PEERS_TO_START_WARP_SYNC,
-				},
+				phase: WarpSyncPhase::AwaitingPeers,
 				total_bytes: self.total_proof_bytes,
 			},
 			Phase::WarpProof { .. } => WarpSyncProgress {
