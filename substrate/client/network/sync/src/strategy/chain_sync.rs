@@ -1374,19 +1374,21 @@ where
 			self.import_existing = true;
 			// Latest state is missing, start with the last finalized state or genesis instead.
 			if let Some((hash, number)) = info.finalized_state {
-				debug!(target: LOG_TARGET, "Starting from finalized state #{number}");
+				info!(target: LOG_TARGET, "Starting from finalized state #{number}");
 				self.best_queued_hash = hash;
 				self.best_queued_number = number;
 			} else {
-				debug!(target: LOG_TARGET, "Restarting from genesis");
+				info!(target: LOG_TARGET, "Restarting from genesis");
 				self.best_queued_hash = Default::default();
 				self.best_queued_number = Zero::zero();
 			}
 		}
 
 		if let Some((start, end)) = info.block_gap {
-			if self.mode != ChainSyncMode::LightRpc {
-				debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
+			if self.mode == ChainSyncMode::LightRpc {
+				info!(target: LOG_TARGET, "Skipping gap sync #{start} - #{end}, LightRpc mode" );
+			} else {
+				info!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
 				self.gap_sync = Some(GapSync {
 					best_queued_number: start - One::one(),
 					target: end,
