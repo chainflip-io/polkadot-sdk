@@ -27,7 +27,7 @@ use crate::{
 };
 use futures::{channel::oneshot, future::ready, FutureExt, StreamExt};
 use jsonrpsee::RpcModule;
-use log::info;
+use log::{info, warn};
 use prometheus_endpoint::Registry;
 use sc_chain_spec::get_extension;
 use sc_client_api::{
@@ -146,6 +146,7 @@ where
 	TBl: BlockT,
 	TExec: CodeExecutor + RuntimeVersionOf + Clone,
 {
+	info!("creating a db_backend with db_config.recreate_onstart: {:?} db_config.blocks_pruning: {:?}", config.db_config().recreate_onstart, config.db_config().blocks_pruning);
 	let backend = new_db_backend(config.db_config())?;
 
 	let genesis_block_builder = GenesisBlockBuilder::new(
