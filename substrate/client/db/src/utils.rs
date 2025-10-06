@@ -298,7 +298,7 @@ fn open_parity_db<Block: BlockT>(path: &Path, db_type: DatabaseType, create: boo
 
 	let mut create_param = create;
 	if recreate_onstart {
-		log::warn!("Deleting all db files and recreating a new ParityDB database on startup.");
+		log::warn!("Deleting old db files and recreating a new ParityDB database on startup.");
 		drop_database(path)?;
 		create_param = true;
 	}
@@ -365,7 +365,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 	}
 
 	if recreate_onstart {
-		log::warn!("Deleting all db files and recreating a new RocksDB database on startup.");
+		log::warn!("Deleting old db files and recreating a new RocksDB database on startup.");
 		drop_database(path)?;
 		db_config.create_if_missing = true;
 	}

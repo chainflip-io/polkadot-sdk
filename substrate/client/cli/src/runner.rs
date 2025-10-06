@@ -187,6 +187,10 @@ pub fn print_node_infos<C: SubstrateCli>(config: &Configuration) {
 			.path()
 			.map_or_else(|| "<unknown>".to_owned(), |p| p.display().to_string())
 	);
+
+	if config.network.sync_mode.light_rpc() {
+		info!("⚡  Light-RPC mode enabled");
+	}
 }
 
 #[cfg(test)]

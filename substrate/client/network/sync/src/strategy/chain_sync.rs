@@ -242,7 +242,7 @@ pub enum ChainSyncMode {
 		/// Download indexed transactions for recent blocks.
 		storage_chain_mode: bool,
 	},
-	/// minimize startup-time and disk space (BETA, RocksDB only)
+	/// Full mode but skips gap syncing
 	LightRpc,
 }
 
@@ -1385,7 +1385,11 @@ where
 		}
 
 		if let Some((start, end)) = info.block_gap {
-			if self.mode != ChainSyncMode::LightRpc {
+			if self.mode == ChainSyncMode::LightRpc {
+				info!(target: LOG_TARGET, "Skipping gap sync #{start} - #{end}, LightRpc mode" );
+			} else {
+				info!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
+
 				debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
 				self.gap_sync = Some(GapSync {
 					best_queued_number: start - One::one(),
