@@ -359,9 +359,10 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 		},
 	}
 	db_config.memory_budget = memory_budget;
-	// if limit_size {
-	// 	db_config.max_total_wal_size = Some(64 * 1024 * 1024);
-	// }
+	if limit_size {
+		db_config.max_total_wal_size = Some(64 * 1024 * 1024);
+		db_config.max_open_files = 256;
+	}
 
 	if recreate_onstart {
 		log::warn!("Deleting all db files and recreating a new RocksDB database on startup.");
