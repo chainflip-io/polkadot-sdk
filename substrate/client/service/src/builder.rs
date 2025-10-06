@@ -27,7 +27,7 @@ use crate::{
 };
 use futures::{channel::oneshot, future::ready, FutureExt, StreamExt};
 use jsonrpsee::RpcModule;
-use log::info;
+use log::{info, warn};
 use prometheus_endpoint::Registry;
 use sc_chain_spec::get_extension;
 use sc_client_api::{
