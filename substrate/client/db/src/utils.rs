@@ -298,7 +298,7 @@ fn open_parity_db<Block: BlockT>(path: &Path, db_type: DatabaseType, create: boo
 
 	let mut create_param = create;
 	if recreate_onstart {
-		log::warn!("Deleting all db files and recreating a new ParityDB database at startup.");
+		log::warn!("Deleting all db files and recreating a new ParityDB database on startup.");
 		drop_database(path)?;
 		create_param = true;
 	}
@@ -359,12 +359,12 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 		},
 	}
 	db_config.memory_budget = memory_budget;
-	if limit_size {
-		db_config.max_total_wal_size = Some(64 * 1024 * 1024);
-	}
+	// if limit_size {
+	// 	db_config.max_total_wal_size = Some(64 * 1024 * 1024);
+	// }
 
 	if recreate_onstart {
-		log::warn!("Deleting all db files and recreating a new RocksDB database at startup.");
+		log::warn!("Deleting all db files and recreating a new RocksDB database on startup.");
 		drop_database(path)?;
 		db_config.create_if_missing = true;
 	}

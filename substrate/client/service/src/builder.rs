@@ -146,7 +146,6 @@ where
 	TBl: BlockT,
 	TExec: CodeExecutor + RuntimeVersionOf + Clone,
 {
-	info!("creating a db_backend with db_config.recreate_onstart: {:?} db_config.blocks_pruning: {:?}", config.db_config().recreate_onstart, config.db_config().blocks_pruning);
 	let backend = new_db_backend(config.db_config())?;
 
 	let genesis_block_builder = GenesisBlockBuilder::new(

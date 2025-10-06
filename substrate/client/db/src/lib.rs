@@ -1162,7 +1162,6 @@ impl<Block: BlockT> Backend<Block> {
 
 		let db_source = &db_config.source;
 
-		info!("Opening database: {:?} with recreate_onstart: {}", db_source.path(), db_config.recreate_onstart);
 		let (needs_init, db) = match crate::utils::open_database::<Block>(
 			db_source,
 			DatabaseType::Full,
