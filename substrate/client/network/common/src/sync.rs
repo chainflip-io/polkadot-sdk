@@ -34,7 +34,7 @@ pub enum SyncMode {
 	},
 	/// Warp sync - verify authority set transitions and the latest state.
 	Warp,
-	/// Minimize start-up time and disk space. (RocksDB only)
+	/// Warp sync but skips gap syncing. (BETA, RocksDB only)
 	LightRpc,
 }
 
