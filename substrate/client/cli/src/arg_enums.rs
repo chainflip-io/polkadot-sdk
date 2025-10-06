@@ -298,7 +298,8 @@ pub enum SyncMode {
 	/// blocks (unless `blocks-pruning` is set to archive mode). This saves bandwidth while still
 	/// allowing the node to serve as a warp sync source for other nodes.
 	Warp,
-	/// Minimize start-up time and disk space. (RocksDB only)
+	/// Minimize start-up time and disk space. Similar to Warp but downloads only the latest state
+	/// and skips gap syncing. (BETA, RocksDB only)
 	LightRpc,
 }
 

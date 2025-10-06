@@ -305,7 +305,7 @@ pub enum ChainSyncMode {
 		/// Download indexed transactions for recent blocks.
 		storage_chain_mode: bool,
 	},
-	/// Minimize start-up time and disk space. (RocksDB only)
+	/// Warp sync but skips gap syncing. (BETA, RocksDB only)
 	LightRpc,
 }
 
@@ -1962,19 +1962,22 @@ where
 		// The client is the source of truth for the gap. Rebuild the gap sync state from it, or
 		// drop ours if the database has already closed the gap.
 		let old_gap = self.gap_sync.take().map(|g| (g.best_queued_number, g.target));
-		// Light RPC nodes never fill the block gap.
-		if let Some(BlockGap { start, end, .. }) =
-			info.block_gap.filter(|_| self.mode != ChainSyncMode::LightRpc)
-		{
-			debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end} (old gap best and target: {old_gap:?})");
-			self.gap_sync = Some(GapSync {
-				best_queued_number: start - One::one(),
-				target: end,
-				blocks: BlockCollection::with_metrics(
-					self.metrics.as_ref().map(|m| m.block_collection.clone()),
-				),
-				stats: GapSyncStats::new(),
-			});
+		if let Some(BlockGap { start, end, .. }) = info.block_gap {
+			if self.mode == ChainSyncMode::LightRpc {
+				info!(target: LOG_TARGET, "Skipping gap sync #{start} - #{end}, LightRpc mode. (old gap best and target: {old_gap:?})" );
+			} else {
+				info!(target: LOG_TARGET, "Starting gap sync #{start} - #{end}");
+
+				debug!(target: LOG_TARGET, "Starting gap sync #{start} - #{end} (old gap best and target: {old_gap:?})");
+				self.gap_sync = Some(GapSync {
+					best_queued_number: start - One::one(),
+					target: end,
+					blocks: BlockCollection::with_metrics(
+						self.metrics.as_ref().map(|m| m.block_collection.clone()),
+					),
+					stats: GapSyncStats::new(),
+				});
+			}
 		} else if let Some((best, target)) = old_gap {
 			debug!(
 				target: LOG_TARGET,
