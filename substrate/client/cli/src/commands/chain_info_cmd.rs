@@ -79,6 +79,7 @@ impl ChainInfoCmd {
 			source: config.database.clone(),
 			blocks_pruning: config.blocks_pruning,
 			limit_size: config.network.sync_mode == SyncMode::LightRpc,
+			recreate_onstart: config.network.sync_mode == SyncMode::LightRpc,
 		};
 		let backend = sc_service::new_db_backend::<B>(db_config)?;
 		let info: ChainInfo<B> = backend.blockchain().info().into();

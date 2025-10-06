@@ -312,6 +312,8 @@ pub struct DatabaseSettings {
 	pub blocks_pruning: BlocksPruning,
 	/// Try to compactify DB regularly
 	pub limit_size: bool,
+	/// Always recreates DB on startup
+	pub recreate_onstart: bool,
 }
 
 /// Block pruning settings.
@@ -1134,14 +1136,16 @@ impl<Block: BlockT> Backend<Block> {
 			db_source,
 			DatabaseType::Full,
 			false,
+			db_config.recreate_onstart,
 			db_config.limit_size,
 		) {
-			Ok(db) => (false, db),
+			Ok(db) => (db_config.recreate_onstart, db),
 			Err(OpenDbError::DoesNotExist) => {
 				let db = crate::utils::open_database::<Block>(
 					db_source,
 					DatabaseType::Full,
 					true,
+					db_config.recreate_onstart,
 					db_config.limit_size,
 				)?;
 				(true, db)
@@ -1184,6 +1188,7 @@ impl<Block: BlockT> Backend<Block> {
 			source: DatabaseSource::Custom { db, require_create_flag: true },
 			blocks_pruning,
 			limit_size: false,
+			recreate_onstart: false,
 		};
 
 		Self::new(db_setting, canonicalization_delay).expect("failed to create test-db")
@@ -2731,6 +2736,7 @@ pub(crate) mod tests {
 				source: DatabaseSource::Custom { db: backing, require_create_flag: false },
 				blocks_pruning: BlocksPruning::KeepFinalized,
 				limit_size: false,
+				recreate_onstart: false,
 			},
 			0,
 		)
