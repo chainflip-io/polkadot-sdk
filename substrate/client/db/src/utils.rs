@@ -171,11 +171,20 @@ where
 	})
 }
 
+/// Drop all db files for the given database source.
+pub fn drop_database(path: &Path) -> Result<(), io::Error> {
+	if path.is_dir() {
+		std::fs::remove_dir_all(path)?;
+	}
+	Ok(())
+}
+
 /// Opens the configured database.
 pub fn open_database<Block: BlockT>(
 	db_source: &DatabaseSource,
 	db_type: DatabaseType,
 	create: bool,
+	recreate_onstart: bool,
 	limit_size: bool,
 ) -> OpenDbResult {
 	// Maybe migrate (copy) the database to a type specific subdirectory to make it
@@ -183,20 +192,21 @@ pub fn open_database<Block: BlockT>(
 	// NOTE: This function can be removed in a few releases
 	maybe_migrate_to_type_subdir::<Block>(db_source, db_type, limit_size)?;
 
-	open_database_at::<Block>(db_source, db_type, create, limit_size)
+	open_database_at::<Block>(db_source, db_type, create, recreate_onstart, limit_size)
 }
 
 fn open_database_at<Block: BlockT>(
 	db_source: &DatabaseSource,
 	db_type: DatabaseType,
 	create: bool,
+	recreate_onstart: bool,
 	limit_size: bool,
 ) -> OpenDbResult {
 	let db: Arc<dyn Database<DbHash>> = match &db_source {
-		DatabaseSource::ParityDb { path } => open_parity_db::<Block>(path, db_type, create)?,
+		DatabaseSource::ParityDb { path } => open_parity_db::<Block>(path, db_type, create, recreate_onstart)?,
 		#[cfg(feature = "rocksdb")]
 		DatabaseSource::RocksDb { path, cache_size } =>
-			open_kvdb_rocksdb::<Block>(path, db_type, create, *cache_size, limit_size)?,
+			open_kvdb_rocksdb::<Block>(path, db_type, create, recreate_onstart, *cache_size, limit_size)?,
 		DatabaseSource::Custom { db, require_create_flag } => {
 			if *require_create_flag && !create {
 				return Err(OpenDbError::DoesNotExist)
@@ -205,11 +215,11 @@ fn open_database_at<Block: BlockT>(
 		},
 		DatabaseSource::Auto { paritydb_path, rocksdb_path, cache_size } => {
 			// check if rocksdb exists first, if not, open paritydb
-			match open_kvdb_rocksdb::<Block>(rocksdb_path, db_type, false, *cache_size, limit_size)
+			match open_kvdb_rocksdb::<Block>(rocksdb_path, db_type, false, false, *cache_size, limit_size)
 			{
 				Ok(db) => db,
 				Err(OpenDbError::NotEnabled(_)) | Err(OpenDbError::DoesNotExist) =>
-					open_parity_db::<Block>(paritydb_path, db_type, create)?,
+					open_parity_db::<Block>(paritydb_path, db_type, create, recreate_onstart)?,
 				Err(as_is) => return Err(as_is),
 			}
 		},
@@ -284,8 +294,16 @@ impl From<io::Error> for OpenDbError {
 	}
 }
 
-fn open_parity_db<Block: BlockT>(path: &Path, db_type: DatabaseType, create: bool) -> OpenDbResult {
-	match crate::parity_db::open(path, db_type, create, false) {
+fn open_parity_db<Block: BlockT>(path: &Path, db_type: DatabaseType, create: bool, 	recreate_onstart: bool) -> OpenDbResult {
+
+	let mut create_param = create;
+	if recreate_onstart {
+		log::warn!("Deleting all db files and recreating a new ParityDB database on startup.");
+		drop_database(path)?;
+		create_param = true;
+	}
+
+	match crate::parity_db::open(path, db_type, create_param, false) {
 		Ok(db) => Ok(db),
 		Err(parity_db::Error::InvalidConfiguration(_)) => {
 			log::warn!("Invalid parity db configuration, attempting database metadata update.");
@@ -301,6 +319,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 	path: &Path,
 	db_type: DatabaseType,
 	create: bool,
+	recreate_onstart: bool,
 	cache_size: usize,
 	limit_size: bool,
 ) -> OpenDbResult {
@@ -340,8 +359,14 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 		},
 	}
 	db_config.memory_budget = memory_budget;
-	if limit_size {
-		db_config.max_total_wal_size = Some(64 * 1024 * 1024);
+	// if limit_size {
+	// 	db_config.max_total_wal_size = Some(64 * 1024 * 1024);
+	// }
+
+	if recreate_onstart {
+		log::warn!("Deleting all db files and recreating a new RocksDB database on startup.");
+		drop_database(path)?;
+		db_config.create_if_missing = true;
 	}
 
 	let db = kvdb_rocksdb::Database::open(&db_config, path)?;
@@ -355,6 +380,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 	_path: &Path,
 	_db_type: DatabaseType,
 	_create: bool,
+	_recreate_onstart: bool,
 	_cache_size: usize,
 	_limit_size: bool,
 ) -> OpenDbResult {
@@ -403,7 +429,7 @@ fn maybe_migrate_to_type_subdir<Block: BlockT>(
 			// database stored in the target directory and close the database on success.
 			let mut old_source = source.clone();
 			old_source.set_path(&basedir);
-			open_database_at::<Block>(&old_source, db_type, false, limit_size)?;
+			open_database_at::<Block>(&old_source, db_type, false, false, limit_size)?;
 
 			info!(
 				"Migrating database to a database-type-based subdirectory: '{:?}' -> '{:?}'",
@@ -620,7 +646,7 @@ mod tests {
 			source.set_path(&old_db_path);
 
 			{
-				let db_res = open_database::<Block>(&source, db_type, true);
+				let db_res = open_database::<Block>(&source, db_type, true, false);
 				assert!(db_res.is_ok(), "New database should be created.");
 				assert!(old_db_path.join(db_check_file).exists());
 				assert!(!old_db_path.join(db_type.as_str()).join("db_version").exists());

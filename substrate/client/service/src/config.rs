@@ -258,6 +258,7 @@ impl Configuration {
 			source: self.database.clone(),
 			blocks_pruning: self.blocks_pruning,
 			limit_size: self.network.sync_mode == SyncMode::LightRpc,
+			recreate_onstart: self.network.sync_mode == SyncMode::LightRpc,
 		}
 	}
 }
