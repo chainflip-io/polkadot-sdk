@@ -339,7 +339,8 @@ impl BlocksPruning {
 	/// True if this is an archive pruning mode (either KeepAll or KeepFinalized).
 	pub fn is_archive(&self) -> bool {
 		match *self {
-			BlocksPruning::KeepAll | BlocksPruning::KeepFinalized { .. } => true,
+			BlocksPruning::KeepAll => true,
+			BlocksPruning::KeepFinalized { prune_headers, .. } => !prune_headers,
 			BlocksPruning::Some { .. } => false,
 		}
 	}
@@ -1753,7 +1754,7 @@ impl<Block: BlockT> Backend<Block> {
 					if start > end {
 						transaction.remove(columns::META, meta_keys::BLOCK_GAP);
 						block_gap = None;
-						info!(target: "db", "Removed block gap.");
+						debug!(target: "db", "Removed block gap.");
 					} else {
 						block_gap = Some((start, end));
 						debug!(target: "db", "Update block gap. {:?}", block_gap);
