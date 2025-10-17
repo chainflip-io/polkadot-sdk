@@ -296,14 +296,13 @@ impl From<io::Error> for OpenDbError {
 
 fn open_parity_db<Block: BlockT>(path: &Path, db_type: DatabaseType, create: bool, 	recreate_onstart: bool) -> OpenDbResult {
 
-	let mut create_param = create;
 	if recreate_onstart {
-		log::warn!("Deleting old db files and recreating a new ParityDB database on startup.");
+		log::info!("Deleting old db files and recreating a new ParityDB database on startup.");
 		drop_database(path)?;
-		create_param = true;
 	}
 
-	match crate::parity_db::open(path, db_type, create_param, false) {
+	let create = create || recreate_onstart;
+	match crate::parity_db::open(path, db_type, create, false) {
 		Ok(db) => Ok(db),
 		Err(parity_db::Error::InvalidConfiguration(_)) => {
 			log::warn!("Invalid parity db configuration, attempting database metadata update.");
@@ -365,7 +364,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 	}
 
 	if recreate_onstart {
-		log::warn!("Deleting old db files and recreating a new RocksDB database on startup.");
+		log::info!("Deleting old db files and recreating a new RocksDB database on startup.");
 		drop_database(path)?;
 		db_config.create_if_missing = true;
 	}
@@ -563,7 +562,7 @@ where
 	let block_gap = db
 		.get(COLUMN_META, meta_keys::BLOCK_GAP)
 		.and_then(|d| Decode::decode(&mut d.as_slice()).ok());
-	info!(target: "db", "block_gap={:?}", block_gap);
+	debug!(target: "db", "block_gap={:?}", block_gap);
 
 	Ok(Meta {
 		best_hash,
@@ -647,7 +646,7 @@ mod tests {
 			source.set_path(&old_db_path);
 
 			{
-				let db_res = open_database::<Block>(&source, db_type, true, false);
+				let db_res = open_database::<Block>(&source, db_type, true, false, false);
 				assert!(db_res.is_ok(), "New database should be created.");
 				assert!(old_db_path.join(db_check_file).exists());
 				assert!(!old_db_path.join(db_type.as_str()).join("db_version").exists());
@@ -655,7 +654,7 @@ mod tests {
 
 			source.set_path(&old_db_path.join(db_type.as_str()));
 
-			let db_res = open_database::<Block>(&source, db_type, true);
+			let db_res = open_database::<Block>(&source, db_type, true, false, false);
 			assert!(db_res.is_ok(), "Reopening the db with the same role should work");
 			// check if the database dir had been migrated
 			assert!(!old_db_path.join(db_check_file).exists());
@@ -681,7 +680,7 @@ mod tests {
 
 			let source = DatabaseSource::RocksDb { path: old_db_path.clone(), cache_size: 128 };
 			{
-				let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+				let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 				assert!(db_res.is_ok(), "New database should be created.");
 
 				// check if the database dir had been migrated
@@ -745,13 +744,13 @@ mod tests {
 
 		// it should create new auto (paritydb) database
 		{
-			let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+			let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 			assert!(db_res.is_ok(), "New database should be created.");
 		}
 
 		// it should reopen existing auto (pairtydb) database
 		{
-			let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+			let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 			assert!(db_res.is_ok(), "Existing parity database should be reopened");
 		}
 
@@ -760,7 +759,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::RocksDb { path: rocksdb_path, cache_size: 128 },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "New database should be opened.");
 		}
@@ -770,7 +769,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::ParityDb { path: paritydb_path },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "Existing parity database should be reopened");
 		}
@@ -788,7 +787,7 @@ mod tests {
 
 		// it should create new rocksdb database
 		{
-			let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+			let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 			assert!(db_res.is_ok(), "New rocksdb database should be created");
 		}
 
@@ -801,7 +800,7 @@ mod tests {
 					cache_size: 128,
 				},
 				DatabaseType::Full,
-				true,
+				true,false, false
 			);
 			assert!(db_res.is_ok(), "Existing rocksdb database should be reopened");
 		}
@@ -811,7 +810,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::ParityDb { path: paritydb_path },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "New paritydb database should be created");
 		}
@@ -821,7 +820,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::RocksDb { path: rocksdb_path, cache_size: 128 },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "Existing rocksdb database should be reopened");
 		}
@@ -839,13 +838,13 @@ mod tests {
 
 		// it should create new paritydb database
 		{
-			let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+			let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 			assert!(db_res.is_ok(), "New database should be created.");
 		}
 
 		// it should reopen existing pairtydb database
 		{
-			let db_res = open_database::<Block>(&source, DatabaseType::Full, true);
+			let db_res = open_database::<Block>(&source, DatabaseType::Full, true, false, false);
 			assert!(db_res.is_ok(), "Existing parity database should be reopened");
 		}
 
@@ -854,7 +853,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::RocksDb { path: rocksdb_path.clone(), cache_size: 128 },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "New rocksdb database should be created");
 		}
@@ -864,7 +863,7 @@ mod tests {
 			let db_res = open_database::<Block>(
 				&DatabaseSource::Auto { paritydb_path, rocksdb_path, cache_size: 128 },
 				DatabaseType::Full,
-				true,
+				true, false, false
 			);
 			assert!(db_res.is_ok(), "Existing parity database should be reopened");
 		}
