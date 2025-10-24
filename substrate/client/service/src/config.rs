@@ -256,12 +256,18 @@ impl Configuration {
 		let is_light_rpc_mode = matches!(self.network.sync_mode, SyncMode::LightRpc);
 		let mut db_source = self.database.clone();
 
-		if is_light_rpc_mode {
-			// When in light-rpc mode, append '_light' to the db path to make light-rpc db
-			// separate from full node db avoiding accidental deletion of full node db.
-			if let Some(path) = db_source.path() {
-				db_source.set_path(&path.join("_light"));
-			}
+		// When in light-rpc mode, append '_light' to the db path to make light-rpc db
+		// separate from full node db avoiding accidental deletion of full node db.
+		if let (Some(path), true) = (db_source.path(), is_light_rpc_mode) {
+			db_source.set_path(
+				&path.file_name()
+					.map(|name| {
+						let mut new_name = name.to_os_string();
+						new_name.push("_light");
+						path.with_file_name(new_name)
+					})
+					.unwrap_or_else(|| path.join("db_light")),
+			);
 		}
 
 		sc_client_db::DatabaseSettings {
