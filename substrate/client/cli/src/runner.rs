@@ -183,7 +183,8 @@ pub fn print_node_infos<C: SubstrateCli>(config: &Configuration) {
 		"💾 Database: {} at {}",
 		config.database,
 		config
-			.database
+		    .db_config()
+			.source
 			.path()
 			.map_or_else(|| "<unknown>".to_owned(), |p| p.display().to_string())
 	);
