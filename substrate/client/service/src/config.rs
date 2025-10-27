@@ -252,13 +252,31 @@ impl Configuration {
 
 	/// Returns the database config for creating the backend.
 	pub fn db_config(&self) -> sc_client_db::DatabaseSettings {
+
+		let is_light_rpc_mode = matches!(self.network.sync_mode, SyncMode::LightRpc);
+		let mut db_source = self.database.clone();
+
+		// When in light-rpc mode, append '_light' to the db path to make light-rpc db
+		// separate from full node db avoiding accidental deletion of full node db.
+		if let (Some(path), true) = (db_source.path(), is_light_rpc_mode) {
+			db_source.set_path(
+				&path.file_name()
+					.map(|name| {
+						let mut new_name = name.to_os_string();
+						new_name.push("_light");
+						path.with_file_name(new_name)
+					})
+					.unwrap_or_else(|| path.join("db_light")),
+			);
+		}
+
 		sc_client_db::DatabaseSettings {
 			trie_cache_maximum_size: self.trie_cache_maximum_size,
 			state_pruning: self.state_pruning.clone(),
-			source: self.database.clone(),
+			source: db_source,
 			blocks_pruning: self.blocks_pruning,
-			limit_size: self.network.sync_mode == SyncMode::LightRpc,
-			recreate_onstart: self.network.sync_mode == SyncMode::LightRpc,
+			limit_size: is_light_rpc_mode,
+			recreate_onstart: is_light_rpc_mode,
 		}
 	}
 }
