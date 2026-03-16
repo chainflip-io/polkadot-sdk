@@ -672,7 +672,8 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
-		let authorities = validators.map(|(_, k)| (k, 1)).collect::<Vec<_>>();
+		let validator_keys: Vec<AuthorityId> = validators.map(|(_, k)| k).collect();
+		let authorities = Self::consolidate_delegations(validator_keys.into_iter());
 		Self::initialize(authorities);
 	}
 
@@ -680,11 +681,16 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
+		let validator_keys: Vec<AuthorityId> = validators.map(|(_, k)| k).collect();
+
+		// Also trigger if delegations have changed since last session.
+		let delegations_changed = DelegationsChanged::<T>::take();
+
 		// Always issue a change if `session` says that the validators have changed.
 		// Even if their session keys are the same as before, the underlying economic
 		// identities have changed.
-		let current_set_id = if changed || Stalled::<T>::exists() {
-			let next_authorities = validators.map(|(_, k)| (k, 1)).collect::<Vec<_>>();
+		let current_set_id = if changed || delegations_changed || Stalled::<T>::exists() {
+			let next_authorities = Self::consolidate_delegations(validator_keys.into_iter());
 
 			let res = if let Some((further_wait, median)) = Stalled::<T>::take() {
 				Self::schedule_change(next_authorities, further_wait, Some(median))
@@ -708,6 +714,9 @@ where
 				// either the session module signalled that the validators have changed
 				// or the set was stalled. but since we didn't successfully schedule
 				// an authority set change we do not increment the set id.
+				if delegations_changed {
+					DelegationsChanged::<T>::put(true);
+				}
 				CurrentSetId::<T>::get()
 			}
 		} else {
@@ -722,9 +731,13 @@ where
 		SetIdSession::<T>::insert(current_set_id, &session_index);
 	}
 
-	fn on_disabled(i: u32) {
-		Self::deposit_log(ConsensusLog::OnDisabled(i as u64))
-	}
+	/// No-op. With vote delegation, the GRANDPA authority set uses consolidated
+	/// weights that don't map 1:1 to validator indices. There is no GRANDPA
+	/// client protocol for partial weight reduction mid-session, and fully
+	/// disabling a consolidated authority would be too aggressive (punishing
+	/// the entire delegation group for one validator). Authority set corrections
+	/// are applied at the next session boundary instead.
+	fn on_disabled(_i: u32) {}
 }
 
 /// Trait for managing GRANDPA vote delegations.
