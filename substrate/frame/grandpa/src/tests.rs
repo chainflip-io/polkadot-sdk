@@ -20,7 +20,7 @@
 #![cfg(test)]
 
 use super::{Call, Event, *};
-use crate::mock::*;
+use crate::{mock::*, GrandpaVoteDelegation};
 use fg_primitives::ScheduledChange;
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -341,8 +341,7 @@ fn report_equivocation_current_set_works() {
 			);
 		}
 
-		let equivocation_authority_index = 0;
-		let equivocation_key = &authorities[equivocation_authority_index].0;
+		let equivocation_key = &authorities[0].0;
 		let equivocation_keyring = extract_keyring(equivocation_key);
 
 		let set_id = CurrentSetId::<Test>::get();
@@ -368,8 +367,13 @@ fn report_equivocation_current_set_works() {
 
 		start_era(2);
 
-		// check that the balance of 0-th validator is slashed 100%.
-		let equivocation_validator_id = validators[equivocation_authority_index];
+		// find the validator that owns the equivocation key
+		let original_authorities = test_authorities();
+		let original_index = original_authorities
+			.iter()
+			.position(|(key, _)| key == equivocation_key)
+			.unwrap();
+		let equivocation_validator_id = validators[original_index];
 
 		assert_eq!(Balances::total_balance(&equivocation_validator_id), 10_000_000 - 10_000);
 		assert_eq!(Staking::slashable_balance_of(&equivocation_validator_id), 0);
@@ -405,8 +409,7 @@ fn report_equivocation_old_set_works() {
 		let authorities = Grandpa::grandpa_authorities();
 		let validators = Session::validators();
 
-		let equivocation_authority_index = 0;
-		let equivocation_key = &authorities[equivocation_authority_index].0;
+		let equivocation_key = &authorities[0].0;
 
 		// create the key ownership proof in the "old" set
 		let key_owner_proof =
@@ -446,8 +449,13 @@ fn report_equivocation_old_set_works() {
 
 		start_era(3);
 
-		// check that the balance of 0-th validator is slashed 100%.
-		let equivocation_validator_id = validators[equivocation_authority_index];
+		// find the validator that owns the equivocation key
+		let original_authorities = test_authorities();
+		let original_index = original_authorities
+			.iter()
+			.position(|(key, _)| key == equivocation_key)
+			.unwrap();
+		let equivocation_validator_id = validators[original_index];
 
 		assert_eq!(Balances::total_balance(&equivocation_validator_id), 10_000_000 - 10_000);
 		assert_eq!(Staking::slashable_balance_of(&equivocation_validator_id), 0);
@@ -606,8 +614,7 @@ fn report_equivocation_invalid_equivocation_proof() {
 
 		let authorities = Grandpa::grandpa_authorities();
 
-		let equivocation_authority_index = 0;
-		let equivocation_key = &authorities[equivocation_authority_index].0;
+		let equivocation_key = &authorities[0].0;
 		let equivocation_keyring = extract_keyring(equivocation_key);
 
 		// generate a key ownership proof at set id = 1
@@ -645,10 +652,11 @@ fn report_equivocation_invalid_equivocation_proof() {
 		));
 
 		// votes signed with different authority keys
+		let other_keyring = extract_keyring(&authorities[1].0);
 		assert_invalid_equivocation_proof(generate_equivocation_proof(
 			set_id,
 			(1, H256::random(), 10, &equivocation_keyring),
-			(1, H256::random(), 10, &Ed25519Keyring::Charlie),
+			(1, H256::random(), 10, &other_keyring),
 		));
 
 		// votes signed with a key that isn't part of the authority set
@@ -916,4 +924,261 @@ fn valid_equivocation_reports_dont_pay_fees() {
 		assert!(post_info.actual_weight.is_none());
 		assert_eq!(post_info.pays_fee, Pays::Yes);
 	})
+}
+
+// ---- Vote delegation tests ----
+
+#[test]
+fn add_vote_delegation_works() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		initialize_block(1, Default::default());
+
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+
+		assert_eq!(GrandpaVoteDelegations::<Test>::get(&auth_2), Some(auth_1.clone()));
+		assert_eq!(GrandpaDelegators::<Test>::get(&auth_1), vec![auth_2.clone()]);
+
+		System::assert_last_event(
+			Event::GrandpaVoteDelegated { delegator: auth_2, delegate: auth_1 }.into(),
+		);
+	});
+}
+
+#[test]
+fn add_vote_delegation_rejects_self_delegation() {
+	new_test_ext(vec![(1, 1), (2, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		assert_noop!(
+			Grandpa::add_vote_delegation(auth_1.clone(), auth_1),
+			Error::<Test>::SelfDelegation,
+		);
+	});
+}
+
+#[test]
+fn add_vote_delegation_rejects_chaining() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+		let auth_3 = to_authorities(vec![(3, 1)])[0].0.clone();
+
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+
+		// auth_3 cannot delegate to auth_2 (auth_2 is a delegator, so it can't be a delegate)
+		assert_noop!(
+			Grandpa::add_vote_delegation(auth_3.clone(), auth_2.clone()),
+			Error::<Test>::DelegateIsDelegator,
+		);
+
+		// auth_1 cannot delegate to auth_3 (auth_1 is already a delegate)
+		assert_noop!(
+			Grandpa::add_vote_delegation(auth_1.clone(), auth_3.clone()),
+			Error::<Test>::DelegatorIsDelegate,
+		);
+	});
+}
+
+#[test]
+fn add_vote_delegation_rejects_duplicate() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+		assert_noop!(
+			Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()),
+			Error::<Test>::DelegationAlreadyExists,
+		);
+	});
+}
+
+#[test]
+fn add_vote_delegation_rejects_too_many() {
+	let auths: Vec<(u64, u64)> = (1..=12).map(|i| (i, 1)).collect();
+	new_test_ext(auths).execute_with(|| {
+		let delegate = to_authorities(vec![(1, 1)])[0].0.clone();
+
+		for i in 2..=11 {
+			let delegator = to_authorities(vec![(i, 1)])[0].0.clone();
+			assert_ok!(Grandpa::add_vote_delegation(delegator, delegate.clone()));
+		}
+
+		let one_too_many = to_authorities(vec![(12, 1)])[0].0.clone();
+		assert_noop!(
+			Grandpa::add_vote_delegation(one_too_many, delegate),
+			Error::<Test>::TooManyDelegators,
+		);
+	});
+}
+
+#[test]
+fn remove_vote_delegation_works() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		initialize_block(1, Default::default());
+
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+		assert_ok!(Grandpa::remove_vote_delegation(auth_2.clone()));
+
+		assert_eq!(GrandpaVoteDelegations::<Test>::get(&auth_2), None);
+		assert!(GrandpaDelegators::<Test>::get(&auth_1).is_empty());
+
+		System::assert_last_event(Event::GrandpaVoteDelegationRemoved { delegator: auth_2 }.into());
+	});
+}
+
+#[test]
+fn remove_vote_delegation_not_found() {
+	new_test_ext(vec![(1, 1), (2, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		assert_noop!(Grandpa::remove_vote_delegation(auth_1), Error::<Test>::DelegationNotFound,);
+	});
+}
+
+#[test]
+fn delegation_consolidates_authority_set_on_session_change() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+		let auth_3 = to_authorities(vec![(3, 1)])[0].0.clone();
+
+		// auth_2, auth_3 delegate to auth_1
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+		assert_ok!(Grandpa::add_vote_delegation(auth_3.clone(), auth_1.clone()));
+
+		let ids: Vec<u64> = (1..=5).collect();
+		let validators: Vec<(&u64, AuthorityId)> =
+			ids.iter().map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone())).collect();
+
+		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
+			(v.0, v.1.clone())
+		}
+		let empty: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+
+		let pending = PendingChange::<Test>::get().expect("pending change should exist");
+		let next_auths = pending.next_authorities.into_inner();
+
+		// auth_1 gets weight 3 (itself + 2 delegators), auth_2 and auth_3 removed
+		assert_eq!(next_auths.len(), 3);
+		let auth_1_entry = next_auths.iter().find(|(id, _)| id == &auth_1).unwrap();
+		assert_eq!(auth_1_entry.1, 3);
+
+		let auth_4 = to_authorities(vec![(4, 1)])[0].0.clone();
+		let auth_5 = to_authorities(vec![(5, 1)])[0].0.clone();
+		assert!(next_auths.iter().any(|(id, w)| id == &auth_4 && *w == 1));
+		assert!(next_auths.iter().any(|(id, w)| id == &auth_5 && *w == 1));
+
+		assert!(!next_auths.iter().any(|(id, _)| id == &auth_2));
+		assert!(!next_auths.iter().any(|(id, _)| id == &auth_3));
+	});
+}
+
+#[test]
+fn delegation_persists_when_key_leaves_and_returns() {
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+
+		// Session change without auth_2
+		let ids_no_2: Vec<u64> = vec![1, 3];
+		let validators: Vec<(&u64, AuthorityId)> = ids_no_2
+			.iter()
+			.map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone()))
+			.collect();
+
+		PendingChange::<Test>::kill();
+
+		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
+			(v.0, v.1.clone())
+		}
+		let empty: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+
+		// Delegation persists
+		assert_eq!(GrandpaVoteDelegations::<Test>::get(&auth_2), Some(auth_1.clone()));
+
+		// auth_1 has weight 1 (delegator not in set, delegation skipped)
+		let pending = PendingChange::<Test>::get().expect("pending change");
+		let next_auths = pending.next_authorities.into_inner();
+		let auth_1_entry = next_auths.iter().find(|(id, _)| id == &auth_1).unwrap();
+		assert_eq!(auth_1_entry.1, 1);
+		assert_eq!(next_auths.len(), 2);
+
+		// auth_2 returns
+		PendingChange::<Test>::kill();
+
+		let ids_with_2: Vec<u64> = vec![1, 2, 3];
+		let validators_with_2: Vec<(&u64, AuthorityId)> = ids_with_2
+			.iter()
+			.map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone()))
+			.collect();
+
+		fn clone_v2<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
+			(v.0, v.1.clone())
+		}
+		let empty2: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(
+			true,
+			validators_with_2.iter().map(clone_v2),
+			empty2.iter().map(clone_v2),
+		);
+
+		let pending = PendingChange::<Test>::get().expect("pending change");
+		let next_auths = pending.next_authorities.into_inner();
+		let auth_1_entry = next_auths.iter().find(|(id, _)| id == &auth_1).unwrap();
+		assert_eq!(auth_1_entry.1, 2);
+		assert_eq!(next_auths.len(), 2);
+	});
+}
+
+#[test]
+fn delegation_change_triggers_session_update() {
+	// When delegations change but the validator set hasn't, on_new_session
+	// should still schedule a change.
+	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
+		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
+		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
+
+		let ids: Vec<u64> = (1..=3).collect();
+		let validators: Vec<(&u64, AuthorityId)> =
+			ids.iter().map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone())).collect();
+
+		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
+			(v.0, v.1.clone())
+		}
+
+		// First session: no delegations, changed=true
+		let empty: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+		assert!(PendingChange::<Test>::get().is_some());
+		PendingChange::<Test>::kill();
+
+		// Second session: no changes at all, changed=false → no pending change
+		let empty2: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(false, validators.iter().map(clone_v), empty2.iter().map(clone_v));
+		assert!(PendingChange::<Test>::get().is_none());
+
+		// Add a delegation
+		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
+
+		// Third session: changed=false but DelegationsChanged=true → should trigger
+		let empty3: Vec<(&u64, AuthorityId)> = vec![];
+		Grandpa::on_new_session(false, validators.iter().map(clone_v), empty3.iter().map(clone_v));
+		let pending =
+			PendingChange::<Test>::get().expect("should schedule change on delegation update");
+		let next_auths = pending.next_authorities.into_inner();
+
+		// auth_1 should have weight 2 (itself + auth_2)
+		let auth_1_entry = next_auths.iter().find(|(id, _)| id == &auth_1).unwrap();
+		assert_eq!(auth_1_entry.1, 2);
+		assert!(!next_auths.iter().any(|(id, _)| id == &auth_2));
+	});
 }
