@@ -35,7 +35,7 @@ pub use sp_consensus_grandpa::{
 	self as fg_primitives, AuthorityId, AuthorityList, AuthorityWeight,
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::boxed::Box;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchResultWithPostInfo, Pays},
@@ -76,7 +76,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	/// The in-code storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -109,6 +109,12 @@ pub mod pallet {
 		/// can be zero.
 		#[pallet::constant]
 		type MaxSetIdSessionEntries: Get<u64>;
+
+		/// Maximum number of keys that can delegate their GRANDPA vote to a single authority.
+		/// This is a per-delegate limit. Should be set relative to the total authority count
+		/// to prevent a single delegate from exceeding the 2/3+1 finality threshold.
+		#[pallet::constant]
+		type MaxDelegatorsPerGrandpaAuthority: Get<u32>;
 
 		/// The proof of key ownership, used for validating equivocation reports
 		/// The proof include the session index and validator count of the
@@ -267,7 +273,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event {
 		/// New authority set has been applied.
 		NewAuthorities { authority_set: AuthorityList },
@@ -275,6 +281,10 @@ pub mod pallet {
 		Paused,
 		/// Current authority set has been resumed.
 		Resumed,
+		/// A GRANDPA vote delegation was registered.
+		GrandpaVoteDelegated { delegator: AuthorityId, delegate: AuthorityId },
+		/// A GRANDPA vote delegation was removed.
+		GrandpaVoteDelegationRemoved { delegator: AuthorityId },
 	}
 
 	#[pallet::error]
@@ -295,6 +305,18 @@ pub mod pallet {
 		InvalidEquivocationProof,
 		/// A given equivocation report is valid but already previously reported.
 		DuplicateOffenceReport,
+		/// Cannot delegate to self.
+		SelfDelegation,
+		/// The delegate already has a delegation of its own (no chaining).
+		DelegateIsDelegator,
+		/// The delegator is already a delegate for other keys (no chaining).
+		DelegatorIsDelegate,
+		/// The delegate has reached the maximum number of delegators.
+		TooManyDelegators,
+		/// The delegator already has an active delegation.
+		DelegationAlreadyExists,
+		/// No delegation exists for this delegator.
+		DelegationNotFound,
 	}
 
 	#[pallet::type_value]
@@ -342,6 +364,27 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Authorities<T: Config> =
 		StorageValue<_, BoundedAuthorityList<T::MaxAuthorities>, ValueQuery>;
+
+	/// Map from delegator authority key to delegate authority key.
+	/// Delegations persist across sessions. If a key is not in the current
+	/// authority set, its delegation is silently skipped during consolidation.
+	#[pallet::storage]
+	pub type GrandpaVoteDelegations<T: Config> = StorageMap<_, Identity, AuthorityId, AuthorityId>;
+
+	/// Reverse index: delegate authority key to its list of delegators.
+	#[pallet::storage]
+	pub type GrandpaDelegators<T: Config> = StorageMap<
+		_,
+		Identity,
+		AuthorityId,
+		BoundedVec<AuthorityId, T::MaxDelegatorsPerGrandpaAuthority>,
+		ValueQuery,
+	>;
+
+	/// Set to true when delegations change. Cleared at session boundaries.
+	/// Ensures consolidation runs even if the validator set hasn't changed.
+	#[pallet::storage]
+	pub type DelegationsChanged<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
