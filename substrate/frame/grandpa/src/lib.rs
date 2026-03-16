@@ -591,6 +591,30 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Builds the authority list from an iterator of authority IDs (each with
+	/// weight 1), consolidating vote delegations. Delegators are removed and
+	/// their weight is added to their delegate.
+	fn consolidate_delegations(authority_ids: impl Iterator<Item = AuthorityId>) -> AuthorityList {
+		use alloc::collections::{BTreeMap, BTreeSet};
+		use pallet::GrandpaVoteDelegations;
+
+		let all_ids: BTreeSet<AuthorityId> = authority_ids.collect();
+		let mut result: BTreeMap<AuthorityId, AuthorityWeight> = BTreeMap::new();
+
+		for id in &all_ids {
+			match GrandpaVoteDelegations::<T>::get(id) {
+				Some(delegate) => {
+					*result.entry(delegate).or_default() += 1;
+				},
+				_ => {
+					*result.entry(id.clone()).or_default() += 1;
+				},
+			}
+		}
+
+		result.into_iter().collect()
+	}
+
 	/// Deposit one of this module's logs.
 	fn deposit_log(log: ConsensusLog<BlockNumberFor<T>>) {
 		let log = DigestItem::Consensus(GRANDPA_ENGINE_ID, log.encode());
@@ -700,5 +724,71 @@ where
 
 	fn on_disabled(i: u32) {
 		Self::deposit_log(ConsensusLog::OnDisabled(i as u64))
+	}
+}
+
+/// Trait for managing GRANDPA vote delegations.
+/// External pallets call these methods to register/remove delegations.
+/// The calling pallet is responsible for authorization.
+pub trait GrandpaVoteDelegation {
+	/// The caller of this *must* ensure that the delegate maps to a valid, slashable on-chain
+	/// entity.
+	fn add_vote_delegation(delegator: AuthorityId, delegate: AuthorityId) -> DispatchResult;
+	fn remove_vote_delegation(delegator: AuthorityId) -> DispatchResult;
+	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId>;
+}
+
+impl<T: Config> GrandpaVoteDelegation for Pallet<T> {
+	fn add_vote_delegation(delegator: AuthorityId, delegate: AuthorityId) -> DispatchResult {
+		use frame_support::ensure;
+		use pallet::*;
+
+		ensure!(delegator != delegate, Error::<T>::SelfDelegation);
+		ensure!(
+			!GrandpaVoteDelegations::<T>::contains_key(&delegator),
+			Error::<T>::DelegationAlreadyExists,
+		);
+		ensure!(
+			GrandpaDelegators::<T>::get(&delegator).is_empty(),
+			Error::<T>::DelegatorIsDelegate,
+		);
+		ensure!(
+			!GrandpaVoteDelegations::<T>::contains_key(&delegate),
+			Error::<T>::DelegateIsDelegator,
+		);
+
+		GrandpaDelegators::<T>::try_mutate(&delegate, |delegators| {
+			delegators
+				.try_push(delegator.clone())
+				.map_err(|_| Error::<T>::TooManyDelegators)
+		})?;
+
+		GrandpaVoteDelegations::<T>::insert(&delegator, &delegate);
+		DelegationsChanged::<T>::put(true);
+
+		Self::deposit_event(Event::GrandpaVoteDelegated { delegator, delegate });
+
+		Ok(())
+	}
+
+	fn remove_vote_delegation(delegator: AuthorityId) -> DispatchResult {
+		use pallet::*;
+
+		let delegate =
+			GrandpaVoteDelegations::<T>::take(&delegator).ok_or(Error::<T>::DelegationNotFound)?;
+
+		GrandpaDelegators::<T>::mutate(&delegate, |delegators| {
+			delegators.retain(|d| d != &delegator);
+		});
+
+		DelegationsChanged::<T>::put(true);
+
+		Self::deposit_event(Event::GrandpaVoteDelegationRemoved { delegator });
+
+		Ok(())
+	}
+
+	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId> {
+		pallet::GrandpaVoteDelegations::<T>::iter().collect()
 	}
 }
