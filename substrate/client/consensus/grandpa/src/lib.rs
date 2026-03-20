@@ -1156,8 +1156,9 @@ where
 }
 
 /// Checks if this node has any available keys in the keystore for any authority id in the given
-/// voter set.  Returns the authority id for which keys are available, or `None` if no keys are
-/// available.
+/// voter set. Checks both the standard GRANDPA key type (`gran`) and the delegate key type
+/// (`grnd`), so that delegate keys registered outside the session pallet can be used for voting.
+/// Returns the authority id for which keys are available, or `None` if no keys are available.
 fn local_authority_id(
 	voters: &VoterSet<AuthorityId>,
 	keystore: Option<&KeystorePtr>,
@@ -1165,7 +1166,11 @@ fn local_authority_id(
 	keystore.and_then(|keystore| {
 		voters
 			.iter()
-			.find(|(p, _)| keystore.has_keys(&[(p.to_raw_vec(), AuthorityId::ID)]))
+			.find(|(p, _)| {
+				let raw = p.to_raw_vec();
+				keystore.has_keys(&[(raw.clone(), AuthorityId::ID)]) ||
+					keystore.has_keys(&[(raw, sp_consensus_grandpa::DELEGATE_KEY_TYPE)])
+			})
 			.map(|(p, _)| p.clone())
 	})
 }
