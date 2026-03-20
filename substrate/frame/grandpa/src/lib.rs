@@ -748,6 +748,7 @@ pub trait GrandpaVoteDelegation {
 	/// entity.
 	fn add_vote_delegation(delegator: AuthorityId, delegate: AuthorityId) -> DispatchResult;
 	fn remove_vote_delegation(delegator: AuthorityId) -> DispatchResult;
+	fn get_delegate(delegator: &AuthorityId) -> Option<AuthorityId>;
 	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId>;
 }
 
@@ -799,6 +800,10 @@ impl<T: Config> GrandpaVoteDelegation for Pallet<T> {
 		Self::deposit_event(Event::GrandpaVoteDelegationRemoved { delegator });
 
 		Ok(())
+	}
+
+	fn get_delegate(delegator: &AuthorityId) -> Option<AuthorityId> {
+		pallet::GrandpaVoteDelegations::<T>::get(delegator)
 	}
 
 	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId> {
