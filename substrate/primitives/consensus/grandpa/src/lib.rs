@@ -42,6 +42,11 @@ pub const RUNTIME_LOG_TARGET: &str = "runtime::grandpa";
 /// Key type for GRANDPA module.
 pub const KEY_TYPE: sp_core::crypto::KeyTypeId = sp_application_crypto::key_types::GRANDPA;
 
+/// Key type for GRANDPA delegate keys. These are not registered via the session
+/// pallet but are used by the GRANDPA voter to sign on behalf of delegators.
+pub const DELEGATE_KEY_TYPE: sp_core::crypto::KeyTypeId =
+	sp_core::crypto::KeyTypeId(*b"grnd");
+
 mod app {
 	use sp_application_crypto::{app_crypto, ed25519, key_types::GRANDPA};
 	app_crypto!(ed25519, GRANDPA);
@@ -517,10 +522,19 @@ where
 	use sp_application_crypto::AppCrypto;
 
 	let encoded = localized_payload(round, set_id, &message);
+	// Try signing with the standard GRANDPA key type first, then fall back to
+	// the delegate key type. This allows delegate keys registered under `grnd`
+	// to be used for voting without going through the session pallet.
 	let signature = keystore
 		.ed25519_sign(AuthorityId::ID, public.as_ref(), &encoded[..])
 		.ok()
-		.flatten()?
+		.flatten()
+		.or_else(|| {
+			keystore
+				.ed25519_sign(DELEGATE_KEY_TYPE, public.as_ref(), &encoded[..])
+				.ok()
+				.flatten()
+		})?
 		.try_into()
 		.ok()?;
 
