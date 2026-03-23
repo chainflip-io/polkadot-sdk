@@ -21,6 +21,19 @@
 
 use super::{Call, Event, *};
 use crate::{mock::*, GrandpaVoteDelegation};
+
+fn as_ref_pair(v: &(u64, AuthorityId)) -> (&u64, AuthorityId) {
+	(&v.0, v.1.clone())
+}
+
+fn trigger_session(changed: bool, validators: &[(u64, AuthorityId)]) {
+	let empty = Vec::<(u64, AuthorityId)>::new();
+	Grandpa::on_new_session(
+		changed,
+		validators.iter().map(as_ref_pair),
+		empty.iter().map(as_ref_pair),
+	);
+}
 use fg_primitives::ScheduledChange;
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
@@ -415,6 +428,9 @@ fn report_equivocation_old_set_works() {
 		let key_owner_proof =
 			Historical::prove((sp_consensus_grandpa::KEY_TYPE, &equivocation_key)).unwrap();
 
+		// capture the set id before advancing to the next era
+		let old_set_id = CurrentSetId::<Test>::get();
+
 		start_era(2);
 
 		// make sure that all authorities have the same balance
@@ -430,11 +446,9 @@ fn report_equivocation_old_set_works() {
 
 		let equivocation_keyring = extract_keyring(equivocation_key);
 
-		let set_id = CurrentSetId::<Test>::get();
-
-		// generate an equivocation proof for the old set,
+		// generate an equivocation proof for the old set
 		let equivocation_proof = generate_equivocation_proof(
-			set_id - 1,
+			old_set_id,
 			(1, H256::random(), 10, &equivocation_keyring),
 			(1, H256::random(), 10, &equivocation_keyring),
 		);
@@ -1051,15 +1065,10 @@ fn delegation_consolidates_authority_set_on_session_change() {
 		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
 		assert_ok!(Grandpa::add_vote_delegation(auth_3.clone(), auth_1.clone()));
 
-		let ids: Vec<u64> = (1..=5).collect();
-		let validators: Vec<(&u64, AuthorityId)> =
-			ids.iter().map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone())).collect();
+		let validators: Vec<(u64, AuthorityId)> =
+			(1..=5).map(|i| (i, to_authorities(vec![(i, 1)])[0].0.clone())).collect();
 
-		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
-			(v.0, v.1.clone())
-		}
-		let empty: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+		trigger_session(true, &validators);
 
 		let pending = PendingChange::<Test>::get().expect("pending change should exist");
 		let next_auths = pending.next_authorities.into_inner();
@@ -1088,19 +1097,14 @@ fn delegation_persists_when_key_leaves_and_returns() {
 		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
 
 		// Session change without auth_2
-		let ids_no_2: Vec<u64> = vec![1, 3];
-		let validators: Vec<(&u64, AuthorityId)> = ids_no_2
-			.iter()
-			.map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone()))
+		let validators: Vec<(u64, AuthorityId)> = vec![1, 3]
+			.into_iter()
+			.map(|i| (i, to_authorities(vec![(i, 1)])[0].0.clone()))
 			.collect();
 
 		PendingChange::<Test>::kill();
 
-		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
-			(v.0, v.1.clone())
-		}
-		let empty: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+		trigger_session(true, &validators);
 
 		// Delegation persists
 		assert_eq!(GrandpaVoteDelegations::<Test>::get(&auth_2), Some(auth_1.clone()));
@@ -1115,21 +1119,12 @@ fn delegation_persists_when_key_leaves_and_returns() {
 		// auth_2 returns
 		PendingChange::<Test>::kill();
 
-		let ids_with_2: Vec<u64> = vec![1, 2, 3];
-		let validators_with_2: Vec<(&u64, AuthorityId)> = ids_with_2
-			.iter()
-			.map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone()))
+		let validators_with_2: Vec<(u64, AuthorityId)> = vec![1, 2, 3]
+			.into_iter()
+			.map(|i| (i, to_authorities(vec![(i, 1)])[0].0.clone()))
 			.collect();
 
-		fn clone_v2<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
-			(v.0, v.1.clone())
-		}
-		let empty2: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(
-			true,
-			validators_with_2.iter().map(clone_v2),
-			empty2.iter().map(clone_v2),
-		);
+		trigger_session(true, &validators_with_2);
 
 		let pending = PendingChange::<Test>::get().expect("pending change");
 		let next_auths = pending.next_authorities.into_inner();
@@ -1140,40 +1135,31 @@ fn delegation_persists_when_key_leaves_and_returns() {
 }
 
 #[test]
-fn delegation_change_triggers_session_update() {
-	// When delegations change but the validator set hasn't, on_new_session
-	// should still schedule a change.
+fn delegation_applied_at_next_session_rotation() {
+	// Delegation changes take effect at the next session where changed=true.
 	new_test_ext(vec![(1, 1), (2, 1), (3, 1)]).execute_with(|| {
 		let auth_1 = to_authorities(vec![(1, 1)])[0].0.clone();
 		let auth_2 = to_authorities(vec![(2, 1)])[0].0.clone();
 
-		let ids: Vec<u64> = (1..=3).collect();
-		let validators: Vec<(&u64, AuthorityId)> =
-			ids.iter().map(|i| (i, to_authorities(vec![(*i, 1)])[0].0.clone())).collect();
-
-		fn clone_v<'a>(v: &'a (&'a u64, AuthorityId)) -> (&'a u64, AuthorityId) {
-			(v.0, v.1.clone())
-		}
+		let validators: Vec<(u64, AuthorityId)> =
+			(1..=3).map(|i| (i, to_authorities(vec![(i, 1)])[0].0.clone())).collect();
 
 		// First session: no delegations, changed=true
-		let empty: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(true, validators.iter().map(clone_v), empty.iter().map(clone_v));
+		trigger_session(true, &validators);
 		assert!(PendingChange::<Test>::get().is_some());
 		PendingChange::<Test>::kill();
-
-		// Second session: no changes at all, changed=false → no pending change
-		let empty2: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(false, validators.iter().map(clone_v), empty2.iter().map(clone_v));
-		assert!(PendingChange::<Test>::get().is_none());
 
 		// Add a delegation
 		assert_ok!(Grandpa::add_vote_delegation(auth_2.clone(), auth_1.clone()));
 
-		// Third session: changed=false but DelegationsChanged=true → should trigger
-		let empty3: Vec<(&u64, AuthorityId)> = vec![];
-		Grandpa::on_new_session(false, validators.iter().map(clone_v), empty3.iter().map(clone_v));
+		// Second session: changed=false → delegation is not applied yet
+		trigger_session(false, &validators);
+		assert!(PendingChange::<Test>::get().is_none());
+
+		// Third session: changed=true → delegation is applied
+		trigger_session(true, &validators);
 		let pending =
-			PendingChange::<Test>::get().expect("should schedule change on delegation update");
+			PendingChange::<Test>::get().expect("should schedule change on session rotation");
 		let next_auths = pending.next_authorities.into_inner();
 
 		// auth_1 should have weight 2 (itself + auth_2)
