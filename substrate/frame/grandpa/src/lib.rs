@@ -381,11 +381,6 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Set to true when delegations change. Cleared at session boundaries.
-	/// Ensures consolidation runs even if the validator set hasn't changed.
-	#[pallet::storage]
-	pub type DelegationsChanged<T: Config> = StorageValue<_, bool, ValueQuery>;
-
 	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -677,19 +672,22 @@ where
 		Self::initialize(authorities);
 	}
 
+	// NOTE: `changed` is determined by the session pallet and will trigger on every
+	// meaningful session boundary, even if the validator set didn't change. This is because the
+	// session pallet already assumes that underlying economic condtions might change even if the
+	// set of keys remains unchanged. This is exactly the behaviour we want for delegated GRANDPA
+	// voting. Therefore, no extra mechanism is required to track changes to the delegation
+	// structure.
 	fn on_new_session<'a, I: 'a>(changed: bool, validators: I, _queued_validators: I)
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
 		let validator_keys: Vec<AuthorityId> = validators.map(|(_, k)| k).collect();
 
-		// Also trigger if delegations have changed since last session.
-		let delegations_changed = DelegationsChanged::<T>::take();
-
 		// Always issue a change if `session` says that the validators have changed.
 		// Even if their session keys are the same as before, the underlying economic
 		// identities have changed.
-		let current_set_id = if changed || delegations_changed || Stalled::<T>::exists() {
+		let current_set_id = if changed || Stalled::<T>::exists() {
 			let next_authorities = Self::consolidate_delegations(validator_keys.into_iter());
 
 			let res = if let Some((further_wait, median)) = Stalled::<T>::take() {
@@ -714,9 +712,6 @@ where
 				// either the session module signalled that the validators have changed
 				// or the set was stalled. but since we didn't successfully schedule
 				// an authority set change we do not increment the set id.
-				if delegations_changed {
-					DelegationsChanged::<T>::put(true);
-				}
 				CurrentSetId::<T>::get()
 			}
 		} else {
@@ -778,7 +773,6 @@ impl<T: Config> GrandpaVoteDelegation for Pallet<T> {
 		})?;
 
 		GrandpaVoteDelegations::<T>::insert(&delegator, &delegate);
-		DelegationsChanged::<T>::put(true);
 
 		Self::deposit_event(Event::GrandpaVoteDelegated { delegator, delegate });
 
@@ -794,8 +788,6 @@ impl<T: Config> GrandpaVoteDelegation for Pallet<T> {
 		GrandpaDelegators::<T>::mutate(&delegate, |delegators| {
 			delegators.retain(|d| d != &delegator);
 		});
-
-		DelegationsChanged::<T>::put(true);
 
 		Self::deposit_event(Event::GrandpaVoteDelegationRemoved { delegator });
 
