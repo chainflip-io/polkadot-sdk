@@ -58,7 +58,7 @@
 
 use codec::Decode;
 use futures::{prelude::*, StreamExt};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use parking_lot::RwLock;
 use prometheus_endpoint::{PrometheusError, Registry};
 use sc_client_api::{
@@ -1156,21 +1156,38 @@ where
 }
 
 /// Checks if this node has any available keys in the keystore for any authority id in the given
-/// voter set. Checks both the standard GRANDPA key type (`gran`) and the delegate key type
-/// (`grnd`), so that delegate keys registered outside the session pallet can be used for voting.
+/// voter set. Checks for delegate keys (`grnd`) first, then standard GRANDPA keys (`gran`).
+/// If a `grnd` key is found, any additional `gran` keys that match the voter set are logged as
+/// a warning since only one key can be used for voting.
 /// Returns the authority id for which keys are available, or `None` if no keys are available.
 fn local_authority_id(
 	voters: &VoterSet<AuthorityId>,
 	keystore: Option<&KeystorePtr>,
 ) -> Option<AuthorityId> {
 	keystore.and_then(|keystore| {
+		// Check for delegate keys first — these take priority.
+		let delegate_match = voters.iter().find(|(p, _)| {
+			keystore.has_keys(&[(p.to_raw_vec(), sp_consensus_grandpa::DELEGATE_KEY_TYPE)])
+		});
+
+		if let Some((delegate_id, _)) = delegate_match {
+			// Warn about any additional gran keys that will be ignored.
+			for (p, _) in voters.iter() {
+				if keystore.has_keys(&[(p.to_raw_vec(), AuthorityId::ID)]) {
+					warn!(
+						target: LOG_TARGET,
+						"Ignoring GRANDPA key {:?} in keystore — voting with delegate key {:?} instead.",
+						p, delegate_id,
+					);
+				}
+			}
+			return Some(delegate_id.clone());
+		}
+
+		// Fall back to standard GRANDPA keys.
 		voters
 			.iter()
-			.find(|(p, _)| {
-				let raw = p.to_raw_vec();
-				keystore.has_keys(&[(raw.clone(), AuthorityId::ID)]) ||
-					keystore.has_keys(&[(raw, sp_consensus_grandpa::DELEGATE_KEY_TYPE)])
-			})
+			.find(|(p, _)| keystore.has_keys(&[(p.to_raw_vec(), AuthorityId::ID)]))
 			.map(|(p, _)| p.clone())
 	})
 }
