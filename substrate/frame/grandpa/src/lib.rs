@@ -667,8 +667,7 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
-		let validator_keys: Vec<AuthorityId> = validators.map(|(_, k)| k).collect();
-		let authorities = Self::consolidate_delegations(validator_keys.into_iter());
+		let authorities = Self::consolidate_delegations(validators.map(|(_, k)| k));
 		Self::initialize(authorities);
 	}
 
@@ -682,13 +681,11 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
-		let validator_keys: Vec<AuthorityId> = validators.map(|(_, k)| k).collect();
-
 		// Always issue a change if `session` says that the validators have changed.
 		// Even if their session keys are the same as before, the underlying economic
 		// identities have changed.
 		let current_set_id = if changed || Stalled::<T>::exists() {
-			let next_authorities = Self::consolidate_delegations(validator_keys.into_iter());
+			let next_authorities = Self::consolidate_delegations(validators.map(|(_, k)| k));
 
 			let res = if let Some((further_wait, median)) = Stalled::<T>::take() {
 				Self::schedule_change(next_authorities, further_wait, Some(median))
