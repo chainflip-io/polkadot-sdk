@@ -54,7 +54,7 @@ use sp_staking::{
 	SessionIndex,
 };
 
-use super::{Call, Config, Error, Pallet, LOG_TARGET};
+use super::{pallet::GrandpaDelegators, Call, Config, Error, Pallet, LOG_TARGET};
 
 /// A round number and set id which point on the time of an offence.
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Encode, Decode)]
@@ -74,8 +74,10 @@ pub struct EquivocationOffence<Offender> {
 	pub session_index: SessionIndex,
 	/// The size of the validator set at the time of the offence.
 	pub validator_set_count: u32,
-	/// The authority which produced this equivocation.
-	pub offender: Offender,
+	/// The authorities responsible for this equivocation.
+	/// For a standard (non-delegated) key this is a single offender.
+	/// For a delegate key this includes all validators that delegated to it.
+	pub offenders: Vec<Offender>,
 }
 
 impl<Offender: Clone> Offence<Offender> for EquivocationOffence<Offender> {
@@ -83,7 +85,7 @@ impl<Offender: Clone> Offence<Offender> for EquivocationOffence<Offender> {
 	type TimeSlot = TimeSlot;
 
 	fn offenders(&self) -> Vec<Offender> {
-		vec![self.offender.clone()]
+		self.offenders.clone()
 	}
 
 	fn session_index(&self) -> SessionIndex {
@@ -106,6 +108,32 @@ impl<Offender: Clone> Offence<Offender> for EquivocationOffence<Offender> {
 	}
 }
 
+/// Resolve an equivocating key to offender identities.
+///
+/// Tries direct resolution via `KeyOwnerProofSystem` first. If the key is not
+/// in the session pallet (e.g. a delegate key), falls back to looking up
+/// `GrandpaDelegators` and resolving each delegator key individually.
+fn resolve_offenders<T, P>(
+	offending_key: AuthorityId,
+	proof: P::Proof,
+) -> Vec<P::IdentificationTuple>
+where
+	T: Config,
+	P: KeyOwnerProofSystem<(KeyTypeId, AuthorityId)>,
+	P::Proof: Clone,
+{
+	if let Some(offender) = P::check_proof((KEY_TYPE, offending_key.clone()), proof.clone()) {
+		return vec![offender];
+	}
+
+	// Key not in session pallet — check if it's a delegate.
+	let delegators = GrandpaDelegators::<T>::get(&offending_key);
+	delegators
+		.iter()
+		.filter_map(|delegator| P::check_proof((KEY_TYPE, delegator.clone()), proof.clone()))
+		.collect()
+}
+
 /// GRANDPA equivocation offence report system.
 ///
 /// This type implements `OffenceReportSystem` such that:
@@ -114,6 +142,9 @@ impl<Offender: Clone> Offence<Offender> for EquivocationOffence<Offender> {
 /// - On-chain validity checks and processing are mostly delegated to the user provided generic
 ///   types implementing `KeyOwnerProofSystem` and `ReportOffence` traits.
 /// - Offence reporter for unsigned transactions is fetched via the the authorship pallet.
+///
+/// When the equivocating key is a delegate (not registered in the session pallet),
+/// all validators that delegated to it are resolved as offenders.
 pub struct EquivocationReportSystem<T, R, P, L>(core::marker::PhantomData<(T, R, P, L)>);
 
 impl<T, R, P, L>
@@ -158,14 +189,16 @@ where
 	) -> Result<(), TransactionValidityError> {
 		let (equivocation_proof, key_owner_proof) = evidence;
 
-		// Check the membership proof to extract the offender's id
-		let key = (KEY_TYPE, equivocation_proof.offender().clone());
-		let offender = P::check_proof(key, key_owner_proof).ok_or(InvalidTransaction::BadProof)?;
+		let offenders =
+			resolve_offenders::<T, P>(equivocation_proof.offender().clone(), key_owner_proof);
+		if offenders.is_empty() {
+			return Err(InvalidTransaction::BadProof.into());
+		}
 
 		// Check if the offence has already been reported, and if so then we can discard the report.
 		let time_slot =
 			TimeSlot { set_id: equivocation_proof.set_id(), round: equivocation_proof.round() };
-		if R::is_known_offence(&[offender], &time_slot) {
+		if R::is_known_offence(&offenders, &time_slot) {
 			Err(InvalidTransaction::Stale.into())
 		} else {
 			Ok(())
@@ -178,25 +211,27 @@ where
 	) -> Result<(), DispatchError> {
 		let (equivocation_proof, key_owner_proof) = evidence;
 		let reporter = reporter.or_else(|| pallet_authorship::Pallet::<T>::author());
-		let offender = equivocation_proof.offender().clone();
 
-		// We check the equivocation within the context of its set id (and
-		// associated session) and round. We also need to know the validator
-		// set count when the offence since it is required to calculate the
-		// slash amount.
 		let set_id = equivocation_proof.set_id();
 		let round = equivocation_proof.round();
 		let session_index = key_owner_proof.session();
 		let validator_set_count = key_owner_proof.validator_count();
 
 		// Validate equivocation proof (check votes are different and signatures are valid).
-		if !sp_consensus_grandpa::check_equivocation_proof(equivocation_proof) {
+		if !sp_consensus_grandpa::check_equivocation_proof(equivocation_proof.clone()) {
 			return Err(Error::<T>::InvalidEquivocationProof.into());
 		}
 
-		// Validate the key ownership proof extracting the id of the offender.
-		let offender = P::check_proof((KEY_TYPE, offender), key_owner_proof)
-			.ok_or(Error::<T>::InvalidKeyOwnershipProof)?;
+		// Resolve the equivocating key to offender identities.
+		// For non-delegated keys this is a direct session lookup.
+		// For delegate keys this fans out to all delegating validators.
+		let offenders = resolve_offenders::<T, P>(
+			equivocation_proof.offender().clone(),
+			key_owner_proof,
+		);
+		if offenders.is_empty() {
+			return Err(Error::<T>::InvalidKeyOwnershipProof.into());
+		}
 
 		// Fetch the current and previous sets last session index.
 		// For genesis set there's no previous set.
@@ -224,7 +259,7 @@ where
 		let offence = EquivocationOffence {
 			time_slot: TimeSlot { set_id, round },
 			session_index,
-			offender,
+			offenders,
 			validator_set_count,
 		};
 

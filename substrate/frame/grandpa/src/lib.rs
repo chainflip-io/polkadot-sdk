@@ -35,7 +35,7 @@ pub use sp_consensus_grandpa::{
 	self as fg_primitives, AuthorityId, AuthorityList, AuthorityWeight,
 };
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::boxed::Box;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchResultWithPostInfo, Pays},
@@ -76,7 +76,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	/// The in-code storage version.
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(5);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(6);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -109,6 +109,12 @@ pub mod pallet {
 		/// can be zero.
 		#[pallet::constant]
 		type MaxSetIdSessionEntries: Get<u64>;
+
+		/// Maximum number of keys that can delegate their GRANDPA vote to a single authority.
+		/// This is a per-delegate limit. Should be set relative to the total authority count
+		/// to prevent a single delegate from exceeding the 2/3+1 finality threshold.
+		#[pallet::constant]
+		type MaxDelegatorsPerGrandpaAuthority: Get<u32>;
 
 		/// The proof of key ownership, used for validating equivocation reports
 		/// The proof include the session index and validator count of the
@@ -267,7 +273,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event {
 		/// New authority set has been applied.
 		NewAuthorities { authority_set: AuthorityList },
@@ -275,6 +281,10 @@ pub mod pallet {
 		Paused,
 		/// Current authority set has been resumed.
 		Resumed,
+		/// A GRANDPA vote delegation was registered.
+		GrandpaVoteDelegated { delegator: AuthorityId, delegate: AuthorityId },
+		/// A GRANDPA vote delegation was removed.
+		GrandpaVoteDelegationRemoved { delegator: AuthorityId },
 	}
 
 	#[pallet::error]
@@ -295,6 +305,18 @@ pub mod pallet {
 		InvalidEquivocationProof,
 		/// A given equivocation report is valid but already previously reported.
 		DuplicateOffenceReport,
+		/// Cannot delegate to self.
+		SelfDelegation,
+		/// The delegate already has a delegation of its own (no chaining).
+		DelegateIsDelegator,
+		/// The delegator is already a delegate for other keys (no chaining).
+		DelegatorIsDelegate,
+		/// The delegate has reached the maximum number of delegators.
+		TooManyDelegators,
+		/// The delegator already has an active delegation.
+		DelegationAlreadyExists,
+		/// No delegation exists for this delegator.
+		DelegationNotFound,
 	}
 
 	#[pallet::type_value]
@@ -342,6 +364,22 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Authorities<T: Config> =
 		StorageValue<_, BoundedAuthorityList<T::MaxAuthorities>, ValueQuery>;
+
+	/// Map from delegator authority key to delegate authority key.
+	/// Delegations persist across sessions. If a key is not in the current
+	/// authority set, its delegation is silently skipped during consolidation.
+	#[pallet::storage]
+	pub type GrandpaVoteDelegations<T: Config> = StorageMap<_, Identity, AuthorityId, AuthorityId>;
+
+	/// Reverse index: delegate authority key to its list of delegators.
+	#[pallet::storage]
+	pub type GrandpaDelegators<T: Config> = StorageMap<
+		_,
+		Identity,
+		AuthorityId,
+		BoundedVec<AuthorityId, T::MaxDelegatorsPerGrandpaAuthority>,
+		ValueQuery,
+	>;
 
 	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
@@ -549,6 +587,30 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Builds the authority list from an iterator of authority IDs (each with
+	/// weight 1), consolidating vote delegations. Delegators are removed and
+	/// their weight is added to their delegate.
+	fn consolidate_delegations(authority_ids: impl Iterator<Item = AuthorityId>) -> AuthorityList {
+		use alloc::collections::{BTreeMap, BTreeSet};
+		use pallet::GrandpaVoteDelegations;
+
+		let all_ids: BTreeSet<AuthorityId> = authority_ids.collect();
+		let mut result: BTreeMap<AuthorityId, AuthorityWeight> = BTreeMap::new();
+
+		for id in &all_ids {
+			match GrandpaVoteDelegations::<T>::get(id) {
+				Some(delegate) => {
+					*result.entry(delegate).or_default() += 1;
+				},
+				_ => {
+					*result.entry(id.clone()).or_default() += 1;
+				},
+			}
+		}
+
+		result.into_iter().collect()
+	}
+
 	/// Deposit one of this module's logs.
 	fn deposit_log(log: ConsensusLog<BlockNumberFor<T>>) {
 		let log = DigestItem::Consensus(GRANDPA_ENGINE_ID, log.encode());
@@ -606,10 +668,16 @@ where
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
 	{
-		let authorities = validators.map(|(_, k)| (k, 1)).collect::<Vec<_>>();
+		let authorities = Self::consolidate_delegations(validators.map(|(_, k)| k));
 		Self::initialize(authorities);
 	}
 
+	// NOTE: `changed` is determined by the session pallet and will trigger on every
+	// meaningful session boundary, even if the validator set didn't change. This is because the
+	// session pallet already assumes that underlying economic condtions might change even if the
+	// set of keys remains unchanged. This is exactly the behaviour we want for delegated GRANDPA
+	// voting. Therefore, no extra mechanism is required to track changes to the delegation
+	// structure.
 	fn on_new_session<'a, I: 'a>(changed: bool, validators: I, _queued_validators: I)
 	where
 		I: Iterator<Item = (&'a T::AccountId, AuthorityId)>,
@@ -620,7 +688,7 @@ where
 		// Even if their session keys are the same as before, the underlying economic
 		// identities have changed.
 		if changed || Stalled::<T>::exists() {
-			let next_authorities = validators.map(|(_, k)| (k, 1)).collect::<Vec<_>>();
+			let next_authorities = Self::consolidate_delegations(validators.map(|(_, k)| k));
 
 			let res = match Stalled::<T>::get() {
 				Some((further_wait, median)) => {
@@ -648,7 +716,79 @@ where
 		SetIdSession::<T>::insert(current_set_id, &session_index);
 	}
 
-	fn on_disabled(i: u32) {
-		Self::deposit_log(ConsensusLog::OnDisabled(i as u64))
+	/// No-op. With vote delegation, the GRANDPA authority set uses consolidated
+	/// weights that don't map 1:1 to validator indices. There is no GRANDPA
+	/// client protocol for partial weight reduction mid-session, and fully
+	/// disabling a consolidated authority would be too aggressive (punishing
+	/// the entire delegation group for one validator). Authority set corrections
+	/// are applied at the next session boundary instead.
+	fn on_disabled(_i: u32) {}
+}
+
+/// Trait for managing GRANDPA vote delegations.
+/// External pallets call these methods to register/remove delegations.
+/// The calling pallet is responsible for authorization.
+pub trait GrandpaVoteDelegation {
+	/// The caller of this *must* ensure that the delegate maps to a valid, slashable on-chain
+	/// entity.
+	fn add_vote_delegation(delegator: AuthorityId, delegate: AuthorityId) -> DispatchResult;
+	fn remove_vote_delegation(delegator: AuthorityId) -> DispatchResult;
+	fn get_delegate(delegator: &AuthorityId) -> Option<AuthorityId>;
+	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId>;
+}
+
+impl<T: Config> GrandpaVoteDelegation for Pallet<T> {
+	fn add_vote_delegation(delegator: AuthorityId, delegate: AuthorityId) -> DispatchResult {
+		use frame_support::ensure;
+		use pallet::*;
+
+		ensure!(delegator != delegate, Error::<T>::SelfDelegation);
+		ensure!(
+			!GrandpaVoteDelegations::<T>::contains_key(&delegator),
+			Error::<T>::DelegationAlreadyExists,
+		);
+		ensure!(
+			GrandpaDelegators::<T>::get(&delegator).is_empty(),
+			Error::<T>::DelegatorIsDelegate,
+		);
+		ensure!(
+			!GrandpaVoteDelegations::<T>::contains_key(&delegate),
+			Error::<T>::DelegateIsDelegator,
+		);
+
+		GrandpaDelegators::<T>::try_mutate(&delegate, |delegators| {
+			delegators
+				.try_push(delegator.clone())
+				.map_err(|_| Error::<T>::TooManyDelegators)
+		})?;
+
+		GrandpaVoteDelegations::<T>::insert(&delegator, &delegate);
+
+		Self::deposit_event(Event::GrandpaVoteDelegated { delegator, delegate });
+
+		Ok(())
+	}
+
+	fn remove_vote_delegation(delegator: AuthorityId) -> DispatchResult {
+		use pallet::*;
+
+		let delegate =
+			GrandpaVoteDelegations::<T>::take(&delegator).ok_or(Error::<T>::DelegationNotFound)?;
+
+		GrandpaDelegators::<T>::mutate(&delegate, |delegators| {
+			delegators.retain(|d| d != &delegator);
+		});
+
+		Self::deposit_event(Event::GrandpaVoteDelegationRemoved { delegator });
+
+		Ok(())
+	}
+
+	fn get_delegate(delegator: &AuthorityId) -> Option<AuthorityId> {
+		pallet::GrandpaVoteDelegations::<T>::get(delegator)
+	}
+
+	fn vote_delegations() -> alloc::collections::BTreeMap<AuthorityId, AuthorityId> {
+		pallet::GrandpaVoteDelegations::<T>::iter().collect()
 	}
 }
