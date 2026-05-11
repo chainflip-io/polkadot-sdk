@@ -701,6 +701,7 @@ impl pallet_grandpa::Config for Runtime {
 	type MaxAuthorities = MaxAuthorities;
 	type MaxNominators = ConstU32<0>;
 	type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
+	type MaxDelegatorsPerGrandpaAuthority = ConstU32<10>;
 
 	type KeyOwnerProof = sp_session::MembershipProof;
 
