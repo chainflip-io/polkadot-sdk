@@ -436,6 +436,7 @@ impl pallet_grandpa::Config for Runtime {
 	type MaxAuthorities = MaxAuthorities;
 	type MaxNominators = MaxNominators;
 	type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
+	type MaxDelegatorsPerGrandpaAuthority = ConstU32<10>;
 
 	type KeyOwnerProof = sp_core::Void;
 	type EquivocationReportSystem = ();
