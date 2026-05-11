@@ -203,6 +203,7 @@ impl Config for Test {
 	type MaxAuthorities = ConstU32<100>;
 	type MaxNominators = ConstU32<1000>;
 	type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
+	type MaxDelegatorsPerGrandpaAuthority = ConstU32<10>;
 	type KeyOwnerProof = sp_session::MembershipProof;
 	type EquivocationReportSystem =
 		super::EquivocationReportSystem<Self, Offences, Historical, ReportLongevity>;
