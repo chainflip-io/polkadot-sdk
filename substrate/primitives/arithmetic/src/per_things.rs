@@ -614,6 +614,19 @@ macro_rules! implement_per_thing {
 			}
 		}
 
+        #[cfg(feature = "proptest")]
+		impl proptest::arbitrary::Arbitrary for $name {
+			type Parameters = ();
+			type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+			fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+				use proptest::prelude::*;
+				(0..=$max)
+					.prop_map(|parts| Self::from_parts(parts))
+					.boxed()
+			}
+		}
+
 		#[cfg(feature = "std")]
 		impl core::fmt::Debug for $name {
 			fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {

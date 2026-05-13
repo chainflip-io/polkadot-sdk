@@ -17743,6 +17743,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "proptest-derive"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ee1c9ac207483d5e7db4940700de86a9aae46ef90c48b57f99fe7edb8345e49"
+dependencies = [
+ "proc-macro2 1.0.95",
+ "quote 1.0.40",
+ "syn 2.0.98",
+]
+
+[[package]]
 name = "prost"
 version = "0.11.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -22686,6 +22697,8 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "primitive-types 0.13.1",
+ "proptest",
+ "proptest-derive",
  "rand 0.8.5",
  "scale-info",
  "serde",
