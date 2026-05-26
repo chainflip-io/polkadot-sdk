@@ -22945,6 +22945,8 @@ dependencies = [
  "parking_lot 0.12.3",
  "paste",
  "primitive-types 0.13.1",
+ "proptest",
+ "proptest-derive",
  "rand 0.8.5",
  "regex",
  "scale-info",

@@ -513,6 +513,7 @@ pub trait Signature: CryptoType + ByteArray + PartialEq + Eq + Clone + Send + Sy
 	TypeInfo,
 )]
 #[cfg_attr(feature = "std", derive(Hash))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct AccountId32([u8; 32]);
 
 impl AccountId32 {

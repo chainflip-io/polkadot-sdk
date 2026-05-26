@@ -37,7 +37,9 @@ log = { workspace = true }
 parking_lot = { optional = true, workspace = true, default-features = true }
 paste = { workspace = true, default-features = true }
 primitive-types = { features = ["codec", "scale-info"], workspace = true }
-rand = { features = ["small_rng"], optional = true, workspace = true, default-features = true }
+rand = { features = [
+	"small_rng",
+], optional = true, workspace = true, default-features = true }
 scale-info = { features = ["derive"], workspace = true }
 secrecy = { features = ["alloc"], workspace = true }
 serde = { optional = true, features = ["alloc", "derive"], workspace = true }
@@ -62,20 +64,30 @@ sp-crypto-hashing.workspace = true
 # k256 crate, better portability, intended to be used in substrate-runtimes (no-std)
 k256 = { features = ["alloc", "ecdsa"], workspace = true }
 # secp256k1 crate, better performance, intended to be used on host side (std)
-secp256k1 = { features = ["alloc", "recovery"], optional = true, workspace = true }
+secp256k1 = { features = [
+	"alloc",
+	"recovery",
+], optional = true, workspace = true }
 
 # bls crypto
 sha2 = { optional = true, workspace = true }
 w3f-bls = { optional = true, workspace = true }
 
 # bandersnatch crypto
-ark-vrf = { optional = true, workspace = true, features = ["bandersnatch", "ring"] }
+ark-vrf = { optional = true, workspace = true, features = [
+	"bandersnatch",
+	"ring",
+] }
 
 [target.'cfg(not(substrate_runtime))'.dependencies]
 sp-externalities.workspace = true
 sp-externalities.default-features = false
 futures = { version = "0.3.30", default-features = false, features = ["alloc"] }
 dyn-clone = "1.0.17"
+
+# proptesting
+proptest = { version = "=1.6", optional = true }
+proptest-derive = { version = "=0.5.1", optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true, default-features = true }
@@ -146,9 +158,7 @@ serde = [
 # This feature enables all crypto primitives for `no_std` builds like microcontrollers
 # or Intel SGX.
 # For the regular wasm runtime builds this should not be used.
-full_crypto = [
-	"blake2",
-]
+full_crypto = ["blake2"]
 
 # This feature adds BLS crypto primitives.
 # It should not be used in production since the implementation and interface may still
@@ -159,3 +169,6 @@ bls-experimental = ["sha2", "w3f-bls"]
 # It should not be used in production since the implementation and interface may still
 # be subject to significant changes.
 bandersnatch-experimental = ["ark-vrf"]
+
+# proptesting
+proptest = ["dep:proptest", "dep:proptest-derive"]
