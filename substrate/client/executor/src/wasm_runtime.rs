@@ -24,6 +24,7 @@
 use crate::error::{Error, WasmError};
 
 use codec::Decode;
+use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 use sc_executor_common::{
 	runtime_blob::RuntimeBlob,
@@ -148,6 +149,8 @@ impl VersionedRuntime {
 	}
 }
 
+type RuntimeCacheEntry = Arc<OnceCell<Arc<VersionedRuntime>>>;
+
 /// Cache for the runtimes.
 ///
 /// When an instance is requested for the first time it is added to this cache. Metadata is kept
@@ -163,7 +166,7 @@ pub struct RuntimeCache {
 	/// A cache of runtimes along with metadata.
 	///
 	/// Runtimes sorted by recent usage. The most recently used is at the front.
-	runtimes: Mutex<LruMap<VersionedRuntimeId, Arc<VersionedRuntime>>>,
+	runtimes: Mutex<LruMap<VersionedRuntimeId, RuntimeCacheEntry>>,
 	/// The size of the instances cache for each runtime.
 	max_runtime_instances: usize,
 	cache_path: Option<PathBuf>,
@@ -238,49 +241,51 @@ impl RuntimeCache {
 		let versioned_runtime_id =
 			VersionedRuntimeId { code_hash: code_hash.clone(), heap_alloc_strategy, wasm_method };
 
-		let mut runtimes = self.runtimes.lock(); // this must be released prior to calling f
-		let versioned_runtime = if let Some(versioned_runtime) = runtimes.get(&versioned_runtime_id)
-		{
-			versioned_runtime.clone()
-		} else {
-			let code = runtime_code.fetch_runtime_code().ok_or(WasmError::CodeNotFound)?;
+		let runtime_entry = {
+			let mut runtimes = self.runtimes.lock();
 
-			let time = std::time::Instant::now();
-
-			let result = create_versioned_wasm_runtime::<H>(
-				&code,
-				ext,
-				wasm_method,
-				heap_alloc_strategy,
-				allow_missing_func_imports,
-				self.max_runtime_instances,
-				self.cache_path.as_deref(),
-			);
-
-			match result {
-				Ok(ref result) => {
-					tracing::debug!(
-						target: "wasm-runtime",
-						"Prepared new runtime version {:?} in {} ms.",
-						result.version,
-						time.elapsed().as_millis(),
-					);
-				},
-				Err(ref err) => {
-					tracing::warn!(target: "wasm-runtime", error = ?err, "Cannot create a runtime");
-				},
+			if let Some(runtime_entry) = runtimes.get(&versioned_runtime_id) {
+				runtime_entry.clone()
+			} else {
+				let runtime_entry = Arc::new(OnceCell::new());
+				runtimes.insert(versioned_runtime_id, runtime_entry.clone());
+				runtime_entry
 			}
-
-			let versioned_runtime = Arc::new(result?);
-
-			// Save new versioned wasm runtime in cache
-			runtimes.insert(versioned_runtime_id, versioned_runtime.clone());
-
-			versioned_runtime
 		};
 
-		// Lock must be released prior to calling f
-		drop(runtimes);
+		let versioned_runtime = runtime_entry
+			.get_or_try_init(|| {
+				let code = runtime_code.fetch_runtime_code().ok_or(WasmError::CodeNotFound)?;
+
+				let time = std::time::Instant::now();
+
+				let result = create_versioned_wasm_runtime::<H>(
+					&code,
+					ext,
+					wasm_method,
+					heap_alloc_strategy,
+					allow_missing_func_imports,
+					self.max_runtime_instances,
+					self.cache_path.as_deref(),
+				);
+
+				match result {
+					Ok(ref result) => {
+						tracing::debug!(
+							target: "wasm-runtime",
+							"Prepared new runtime version {:?} in {} ms.",
+							result.version,
+							time.elapsed().as_millis(),
+						);
+					},
+					Err(ref err) => {
+						tracing::warn!(target: "wasm-runtime", error = ?err, "Cannot create a runtime");
+					},
+				}
+
+				result.map(Arc::new)
+			})?
+			.clone();
 
 		Ok(versioned_runtime.with_instance(ext, f))
 	}

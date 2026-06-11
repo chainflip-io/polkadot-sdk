@@ -20048,6 +20048,7 @@ dependencies = [
  "assert_matches",
  "criterion",
  "num_cpus",
+ "once_cell",
  "parity-scale-codec",
  "parking_lot 0.12.3",
  "paste",
