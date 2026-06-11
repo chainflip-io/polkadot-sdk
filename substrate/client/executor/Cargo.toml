@@ -21,6 +21,7 @@ name = "bench"
 harness = false
 
 [dependencies]
+once_cell = { workspace = true }
 parking_lot = { workspace = true, default-features = true }
 schnellru = { workspace = true }
 tracing = { workspace = true, default-features = true }
